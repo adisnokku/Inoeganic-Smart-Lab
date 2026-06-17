@@ -279,9 +279,15 @@
             const selectChem = document.getElementById('select_chem');
 
             selectInst.innerHTML = masterData.instruments.map(i => `<option value="${i.id}">${i.name} [สถานะ: ${i.status}]</option>`).join('');
-            selectGlass.innerHTML = masterData.glassware.map(g => `<option value="${g.id}">${g.name} (คงเหลือ: ${g.available !== undefined ? g.available : g.total} ใบ)</option>`).join('');
+            selectGlass.innerHTML = masterData.glassware.map(g => {
+                let avail = g.available !== undefined ? g.available : g.total;
+                return `<option value="${g.id}">${g.name} (คงเหลือพร้อมยืม: ${avail} ใบ)</option>`;
+            }).join('');
             
-            selectChem.innerHTML = masterData.chemicals.map(c => `<option value="${c.id}" data-unit="${c.type || 'g'}">${c.name} (${c.available || c.total} ${c.type || 'g'})</option>`).join('');
+            selectChem.innerHTML = masterData.chemicals.map(c => {
+                let avail = c.available !== undefined ? c.available : c.total;
+                return `<option value="${c.id}" data-unit="${c.type || 'g'}">${c.name} (คงเหลือในคลัง: ${avail} ${c.type || 'g'})</option>`;
+            }).join('');
             
             if(masterData.chemicals.length > 0) { updateChemUnitLabel(); }
             selectChem.onchange = updateChemUnitLabel;
@@ -443,35 +449,72 @@
             }
         }
 
+        // 🛠️ ดักจับเครื่องมือชำรุด
         function addInstrumentToCart() {
             const id = document.getElementById('select_inst').value;
             const date = document.getElementById('inst_date').value;
             const start = document.getElementById('inst_start').value;
             const end = document.getElementById('inst_end').value;
             if (!id || !date || !start || !end) { alert('กรุณากรอกข้อมูลให้ครบครับ'); return; }
-            const name = masterData.instruments.find(i => i.id === id).name;
-            cart.push({ item_type: 'Instrument', item_id: id, item_name: name, date, start_time: start, end_time: end, chem_quantity: 1, displayDetails: `🛠️ จองใช้วันที่ ${date} [${start}-${end}]`, note: 'ใช้งานเครื่องมือประจำวัน' });
+            
+            // ตรวจสอบสถานะเครื่องมือจากฐานข้อมูลปัจจุบันก่อนใส่ตะกร้า
+            const targetItem = masterData.instruments.find(i => i.id === id);
+            if (targetItem && targetItem.status !== 'Ready') {
+                alert(`❌ ไม่สามารถจองได้: เครื่องมือนี้อยู่ในสถานะ "${targetItem.status}" (ชำรุดหรือปิดปรับปรุง)`);
+                return;
+            }
+
+            cart.push({ item_type: 'Instrument', item_id: id, item_name: targetItem.name, date, start_time: start, end_time: end, chem_quantity: 1, displayDetails: `🛠️ จองใช้วันที่ ${date} [${start}-${end}]`, note: 'ใช้งานเครื่องมือประจำวัน' });
             renderCart();
         }
 
+        // 🧪 บั๊คฟิกซ์: ดักจับการยืมเครื่องแก้วเกินจำนวนคงคลังจริง
         function addGlasswareToCart() {
             const id = document.getElementById('select_glass').value;
-            const qty = document.getElementById('glass_qty').value;
+            const qty = Number(document.getElementById('glass_qty').value);
             const bDate = document.getElementById('glass_b_date').value; const bTime = document.getElementById('glass_b_time').value;
             const rDate = document.getElementById('glass_r_date').value; const rTime = document.getElementById('glass_r_time').value;
             if (!id || !qty || !bDate || !bTime || !rDate || !rTime) { alert('กรุณาระบุข้อมูลยืม-คืนเครื่องแก้วให้ครบครับ'); return; }
-            const name = masterData.glassware.find(g => g.id === id).name;
-            cart.push({ item_type: 'Glassware', item_id: id, item_name: name, date: bDate, start_time: bTime, end_time: rTime, chem_quantity: Number(qty), displayDetails: `🧪 ยืม ${qty} ใบ | คืน: ${rDate} ${rTime}`, note: `ยืมจำนวน ${qty} ใบ [กำหนดคืน: ${rDate} เวลา ${rTime}]` });
+            if (qty <= 0) { alert('จำนวนที่ระบุต้องมากกว่า 0 ใบครับ'); return; }
+
+            // เช็กยอดคงคลังแบบ Real-time จากสูตรฝั่งชีทที่ดึงมา
+            const targetItem = masterData.glassware.find(g => g.id === id);
+            const availableStock = targetItem.available !== undefined ? Number(targetItem.available) : Number(targetItem.total);
+            
+            // คำนวณจำนวนที่เคยจองไว้ในตะกร้าก่อนหน้านี้ด้วย (ถ้ามี)
+            const alreadyInCart = cart.filter(item => item.item_type === 'Glassware' && item.item_id === id)
+                                      .reduce((sum, item) => sum + item.chem_quantity, 0);
+
+            if ((qty + alreadyInCart) > availableStock) {
+                alert(`❌ สต็อกไม่พอ: ${targetItem.name} คงเหลือในตู้แลปเพียง ${availableStock} ใบเท่านั้น (คุณระบุยืมรวมในตะกร้า: ${qty + alreadyInCart} ใบ)`);
+                return;
+            }
+
+            cart.push({ item_type: 'Glassware', item_id: id, item_name: targetItem.name, date: bDate, start_time: bTime, end_time: rTime, chem_quantity: qty, displayDetails: `🧪 ยืม ${qty} ใบ | คืน: ${rDate} ${rTime}`, note: `ยืมจำนวน ${qty} ใบ [กำหนดคืน: ${rDate} เวลา ${rTime}]` });
             renderCart();
         }
 
+        // ☣️ บั๊คฟิกซ์: ดักจับการเบิกสารเคมีเกินสต็อกคงเหลือจริง
         function addChemicalToCart() {
             const id = document.getElementById('select_chem').value;
-            const qty = document.getElementById('chem_qty').value;
+            const qty = Number(document.getElementById('chem_qty').value);
             const date = document.getElementById('chem_date').value; const time = document.getElementById('chem_time').value;
             if (!id || !qty || !date || !time) { alert('กรุณากรอกข้อมูลเบิกสารเคมีให้ครบครับ'); return; }
-            const name = masterData.chemicals.find(c => c.id === id).name;
-            cart.push({ item_type: 'Chemical', item_id: id, item_name: name, date, start_time: time, end_time: time, chem_quantity: Number(qty), displayDetails: `☣️ เบิก ${qty} ${document.getElementById('chem_unit_label').innerText} | วันที่: ${date}`, note: `เบิกเคมี ${qty} ยอดลดคลัง` });
+            if (qty <= 0) { alert('ปริมาณการเบิกต้องมากกว่า 0 ครับ'); return; }
+
+            const targetItem = masterData.chemicals.find(c => c.id === id);
+            const availableStock = targetItem.available !== undefined ? Number(targetItem.available) : Number(targetItem.total);
+            const unit = document.getElementById('chem_unit_label').innerText;
+
+            const alreadyInCart = cart.filter(item => item.item_type === 'Chemical' && item.item_id === id)
+                                      .reduce((sum, item) => sum + item.chem_quantity, 0);
+
+            if ((qty + alreadyInCart) > availableStock) {
+                alert(`❌ สารเคมีไม่พอ: ${targetItem.name} มียอดคงเหลือให้เบิกได้อีกเพียง ${availableStock} ${unit} (คุณระบุเบิกรวมในตะกร้า: ${qty + alreadyInCart} ${unit})`);
+                return;
+            }
+
+            cart.push({ item_type: 'Chemical', item_id: id, item_name: targetItem.name, date, start_time: time, end_time: time, chem_quantity: qty, displayDetails: `☣️ เบิก ${qty} ${unit} | วันที่: ${date}`, note: `เบิกเคมี ${qty} ยอดลดคลัง` });
             renderCart();
         }
 
