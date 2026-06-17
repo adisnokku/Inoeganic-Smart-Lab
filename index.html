@@ -44,7 +44,6 @@
         <main class="container mx-auto p-4 md:p-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
             
             <section class="lg:col-span-1 space-y-6">
-                
                 <div id="userBookingPanel" class="bg-white p-6 rounded-lg shadow space-y-4">
                     <h2 class="text-base font-bold text-gray-800 border-b pb-2">➕ เลือกสิ่งของใส่ตะกร้า (นักศึกษา/อาจารย์)</h2>
                     <div class="grid grid-cols-3 gap-1 bg-gray-100 p-1 rounded-lg text-xs font-semibold text-center">
@@ -173,12 +172,11 @@
     </div>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbyqGj5SaA-Hq599sAYGODKBjGzj5LIdR6Gr_47khZn4Rw1eSXK-ug1H0Y6U_vq5i0R4/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycbxvj0zOc77ZaXn9WKvrGWHkOHsRVtdZoml-hBzCYm-r_8rgxr_Hk-mmy7y2MEkd5kV2/exec";
         let currentUser = null;
         let masterData = null; 
         let cart = [];
 
-        // 🔐 ระบบยืนยันตัวตน Login
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const emailInput = document.getElementById('login_email').value.trim();
@@ -195,13 +193,10 @@
                 if (result.status === "found") {
                     currentUser = result;
                     currentUser.email = emailInput;
-
-                    // บันทึกโปรไฟล์ลงซ่อนฟอร์ม
                     document.getElementById('user_email').value = emailInput;
                     document.getElementById('advisor_name').value = result.advisor;
                     document.getElementById('phone').value = result.phone;
 
-                    // เปลี่ยนหน้าจอ
                     document.getElementById('loginScreen').classList.add('hidden');
                     document.getElementById('mainDashboard').classList.remove('hidden');
 
@@ -219,7 +214,6 @@
             }
         });
 
-        // 🔐 จัดการระบบ UI หลัง Login แยกตามสิทธิ์ Admin / User
         function configureUIByRole() {
             document.getElementById('userDisplay_name').innerText = currentUser.name;
             document.getElementById('userDisplay_role').innerText = currentUser.role;
@@ -239,13 +233,10 @@
             }
         }
 
-        // 📦 ดึงข้อมูลหลัก (Master Data) จาก Google Sheets
         async function loadData() {
             try {
                 const response = await fetch(API_URL);
                 masterData = await response.json();
-                
-                // อัปเดตตารางและตัวเลือกต่าง ๆ ในระบบ
                 populateDropdowns();
                 renderBookingTable();
                 renderStockTables();
@@ -255,24 +246,21 @@
             }
         }
 
-        // 🔄 ฟังก์ชันของปุ่มรีเฟรชข้อมูลหน้าเว็บสดแบบ Real-time
         async function refreshData() {
             const btn = document.getElementById('refreshBtn');
             btn.innerText = "กำลังดึงข้อมูลล่าสุด...";
             btn.disabled = true;
-            
             try {
                 await loadData();
-                alert("🎉 อัปเดตข้อมูลและคำนวณยอดสต็อกล่าสุดจากฐานข้อมูล Sheets เรียบร้อยแล้วครับ!");
+                alert("🎉 อัปเดตข้อมูลล่าสุดเรียบร้อยแล้ว!");
             } catch (err) {
-                alert("เกิดข้อผิดพลาดในการดึงข้อมูลจากเซิร์ฟเวอร์");
+                alert("เกิดข้อผิดพลาดในการดึงข้อมูล");
             } finally {
                 btn.innerText = "🔄 รีเฟรชข้อมูล";
                 btn.disabled = false;
             }
         }
 
-        // 🛠️ ผูกไอเทมเข้า Dropdown ตัวเลือกฟอร์มยืม
         function populateDropdowns() {
             const selectInst = document.getElementById('select_inst');
             const selectGlass = document.getElementById('select_glass');
@@ -283,13 +271,11 @@
                 let avail = g.available !== undefined ? g.available : g.total;
                 return `<option value="${g.id}">${g.name} (คงเหลือพร้อมยืม: ${avail} ใบ)</option>`;
             }).join('');
-            
             selectChem.innerHTML = masterData.chemicals.map(c => {
                 let avail = c.available !== undefined ? c.available : c.total;
-                return `<option value="${c.id}" data-unit="${c.type || 'g'}">${c.name} (คงเหลือในคลัง: ${avail} ${c.type || 'g'})</option>`;
+                return `<option value="${c.id}" data-unit="${c.type || 'g'}">${c.name} (คงเหลือ: ${avail} ${c.type || 'g'})</option>`;
             }).join('');
-            
-            if(masterData.chemicals.length > 0) { updateChemUnitLabel(); }
+            if(masterData.chemicals.length > 0) updateChemUnitLabel();
             selectChem.onchange = updateChemUnitLabel;
         }
 
@@ -299,19 +285,14 @@
             document.getElementById('chem_unit_label').innerText = unit;
         }
 
-        // 📅 เรนเดอร์ตารางธุรกรรม และปุ่มอนุมัติสำหรับ Admin
         function renderBookingTable() {
             const tbody = document.getElementById('bookingTableBody');
             tbody.innerHTML = '';
-
             if(!masterData.bookings || masterData.bookings.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-400">ยังไม่มีประวัติหรือรายการธุรกรรมในฐานข้อมูล</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-400">ยังไม่มีรายการธุรกรรม</td></tr>`;
                 return;
             }
-
             const isAdmin = currentUser.role.toString().trim().toLowerCase() === 'admin';
-
-            // เรียงลำดับคำขอใหม่ล่าสุดขึ้นก่อน
             const sortedBookings = [...masterData.bookings].reverse();
 
             sortedBookings.forEach(b => {
@@ -323,258 +304,99 @@
                 let actionHtml = '';
                 if(isAdmin) {
                     if(b.status === "Pending Approval") {
-                        actionHtml = `
-                            <div class="flex justify-center space-x-1">
-                                <button onclick="updateBookingStatus('${b.booking_id}', 'Approved')" class="bg-green-500 text-white px-2 py-1 rounded font-bold text-[10px]">อนุมัติ</button>
-                                <button onclick="updateBookingStatus('${b.booking_id}', 'Rejected')" class="bg-red-500 text-white px-2 py-1 rounded font-bold text-[10px]">ปฏิเสธ</button>
-                            </div>`;
+                        actionHtml = `<div class="flex justify-center space-x-1"><button onclick="updateBookingStatus('${b.booking_id}', 'Approved')" class="bg-green-500 text-white px-2 py-1 rounded font-bold text-[10px]">อนุมัติ</button><button onclick="updateBookingStatus('${b.booking_id}', 'Rejected')" class="bg-red-500 text-white px-2 py-1 rounded font-bold text-[10px]">ปฏิเสธ</button></div>`;
                     } else if(b.status === "Approved" && b.item_type !== "Chemical") {
-                        actionHtml = `<button onclick="updateBookingStatus('${b.booking_id}', 'Returned')" class="w-full bg-blue-500 text-white px-2 py-1 rounded font-bold text-[10px]">🔄 รับคืนของ</button>`;
-                    } else {
-                        actionHtml = `<span class="text-gray-400">-</span>`;
+                        actionHtml = `<button onclick="updateBookingStatus('${b.booking_id}', 'Returned')" class="w-full bg-blue-500 text-white px-2 py-1 rounded font-bold text-[10px]">🔄 รับคืน</button>`;
                     }
                 }
 
                 tbody.innerHTML += `
-                    <tr class="border-b hover:bg-gray-50">
-                        <td class="p-2 font-bold text-gray-700">${b.booking_id}<br><span class="text-[10px] text-gray-400 font-normal">${b.item_type} - ID: ${b.item_id}</span></td>
-                        <td class="p-2">${b.date}<br><span class="text-gray-400 text-[10px]">${b.start_time || ''} - ${b.end_time || ''}</span></td>
-                        <td class="p-2 text-[11px]">👤 ${b.user_email}<br><span class="text-gray-500 font-medium">📝 ${b.note || '-'}</span></td>
+                    <tr class="border-b">
+                        <td class="p-2 font-bold">${b.booking_id}<br><span class="text-[10px] font-normal">${b.item_type}</span></td>
+                        <td class="p-2">${b.date}</td>
+                        <td class="p-2 text-[11px]">${b.user_email}<br>${b.note || '-'}</td>
                         <td class="p-2 text-center"><span class="px-2 py-1 rounded-full text-[10px] ${statusStyle}">${b.status}</span></td>
-                        ${isAdmin ? `<td class="p-2 text-center border-l">${actionHtml}</td>` : ''}
+                        ${isAdmin ? `<td class="p-2 border-l">${actionHtml}</td>` : ''}
                     </tr>`;
             });
         }
 
-        // 📦 เรนเดอร์ตารางตรวจสอบยอดสต็อกในคลัง
         function renderStockTables() {
-            document.getElementById('instTableBody').innerHTML = masterData.instruments.map(i => `
-                <tr class="border-b hover:bg-gray-50"><td class="p-2 font-bold">${i.id}</td><td class="p-2">${i.name}</td><td class="p-2">${i.total}</td><td class="p-2"><span class="${i.status === 'Ready' ? 'text-green-600' : 'text-red-500'} font-bold">${i.status}</span></td></tr>
-            `).join('');
-
-            document.getElementById('glassTableBody').innerHTML = masterData.glassware.map(g => `
-                <tr class="border-b hover:bg-gray-50"><td class="p-2 font-bold">${g.id}</td><td class="p-2">${g.name}</td><td class="p-2 text-center">${g.total}</td><td class="p-2 text-center text-orange-600 font-bold">${g.booked || 0}</td><td class="p-2 text-center text-green-600 font-bold">${g.available !== undefined ? g.available : g.total}</td></tr>
-            `).join('');
-
-            document.getElementById('chemTableBody').innerHTML = masterData.chemicals.map(c => `
-                <tr class="border-b hover:bg-gray-50"><td class="p-2 font-bold">${c.id}</td><td class="p-2">${c.name}</td><td class="p-2">${c.type || 'สารเคมี'}</td><td class="p-2 text-blue-600 font-bold">${c.available || c.total} ${c.type || 'g'}</td></tr>
-            `).join('');
+            document.getElementById('instTableBody').innerHTML = masterData.instruments.map(i => `<tr class="border-b"><td class="p-2">${i.id}</td><td class="p-2">${i.name}</td><td class="p-2">${i.total}</td><td class="p-2 text-${i.status === 'Ready'?'green':'red'}-600">${i.status}</td></tr>`).join('');
+            document.getElementById('glassTableBody').innerHTML = masterData.glassware.map(g => `<tr class="border-b"><td class="p-2">${g.id}</td><td class="p-2">${g.name}</td><td class="p-2 text-center">${g.total}</td><td class="p-2 text-center">${g.booked || 0}</td><td class="p-2 text-center">${g.available !== undefined ? g.available : g.total}</td></tr>`).join('');
+            document.getElementById('chemTableBody').innerHTML = masterData.chemicals.map(c => `<tr class="border-b"><td class="p-2">${c.id}</td><td class="p-2">${c.name}</td><td class="p-2">${c.type}</td><td class="p-2">${c.available || c.total} ${c.type}</td></tr>`).join('');
         }
 
-        // ⚡ ADMIN FUNCTION: เปลี่ยนแปลงสถานะคำขอยืม
-        async function updateBookingStatus(bookingId, statusText) {
-            if (!confirm(`คุณแน่ใจใช่ไหมที่จะเปลี่ยนสถานะรายการ ${bookingId} เป็น "${statusText}"?`)) return;
-            try {
-                const response = await fetch(API_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({ action: 'updateStatus', booking_id: bookingId, status: statusText })
-                });
-                const res = await response.json();
-                if (res.status === 'success') {
-                    alert(`อัปเดตสถานะเป็น "${statusText}" เรียบร้อยแล้วครับ!`);
-                    loadData();
-                } else { alert('ข้อผิดพลาด: ' + res.message); }
-            } catch (e) { alert('การเชื่อมต่อเซิร์ฟเวอร์ล้มเหลว'); }
+        async function updateBookingStatus(id, status) {
+            if (!confirm(`ยืนยันการทำรายการ ${status}?`)) return;
+            const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'updateStatus', booking_id: id, status: status }) });
+            if ((await res.json()).status === 'success') { loadData(); }
         }
 
-        // ⚡ ADMIN FUNCTION: อัปเดตยอดคลังสินค้าโดยตรงจากหน้าเว็บ
         document.getElementById('adminStockForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const type = document.getElementById('adm_type').value;
-            const itemId = document.getElementById('adm_item_id').value;
-            const newQty = document.getElementById('adm_new_qty').value;
-            const statusVal = document.getElementById('adm_status_val').value;
-
-            if(!itemId) { alert('กรุณาเลือกไอเทมที่จะแก้ไขด้วยครับ'); return; }
-
-            const submitBtn = e.target.querySelector('button');
-            submitBtn.disabled = true; submitBtn.innerText = 'กำลังเซฟลงฐานข้อมูล Sheets...';
-
-            try {
-                const response = await fetch(API_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        action: 'updateStock',
-                        item_type: type,
-                        item_id: itemId,
-                        new_qty: newQty,
-                        status_val: type === 'Instrument' ? statusVal : ''
-                    })
-                });
-                const res = await response.json();
-                if (res.status === 'success') {
-                    alert('🎉 ปรับปรุงยอดจำนวนสินค้าคงคลังใน Sheets สำเร็จแล้ว!');
-                    document.getElementById('adm_new_qty').value = '';
-                    loadData();
-                } else { alert('เกิดข้อผิดพลาด: ' + res.message); }
-            } catch (err) { alert('เซิร์ฟเวอร์ไม่ตอบสนอง'); }
-            finally { submitBtn.disabled = false; submitBtn.innerText = '💾 บันทึกการอัปเดตยอดคลังสินค้า'; }
+            const payload = { action: 'updateStock', item_type: document.getElementById('adm_type').value, item_id: document.getElementById('adm_item_id').value, new_qty: document.getElementById('adm_new_qty').value, status_val: document.getElementById('adm_status_val').value };
+            await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
+            alert('บันทึกเรียบร้อย');
+            loadData();
         });
 
         function handleAdminTypeChange() {
             const type = document.getElementById('adm_type').value;
             const itemSelect = document.getElementById('adm_item_id');
-            const statusDiv = document.getElementById('adm_status_div');
-            
-            if (type === 'Instrument') statusDiv.classList.remove('hidden');
-            else statusDiv.classList.add('hidden');
-
             itemSelect.innerHTML = '';
-            if(!masterData) return;
-
             let target = type === 'Instrument' ? masterData.instruments : type === 'Glassware' ? masterData.glassware : masterData.chemicals;
-            target.forEach(i => {
-                let currentTotal = i.total !== undefined ? i.total : i.available;
-                itemSelect.innerHTML += `<option value="${i.id}">${i.id} - ${i.name} (คลังปัจจุบัน: ${currentTotal})</option>`;
+            target.forEach(i => itemSelect.innerHTML += `<option value="${i.id}">${i.id} - ${i.name}</option>`);
+        }
+
+        function switchFormTab(t) {
+            ['form_instrument','form_glassware','form_chemical'].forEach((f, idx) => {
+                document.getElementById(f).classList.toggle('hidden', idx !== (t==='FormInst'?0:t==='FormGlass'?1:2));
             });
         }
 
-        // ================= ฟังก์ชันระบบตะกร้าและการยืมฝั่งนักศึกษา =================
-        function switchFormTab(formId) {
-            document.getElementById('form_instrument').classList.add('hidden');
-            document.getElementById('form_glassware').classList.add('hidden');
-            document.getElementById('form_chemical').classList.add('hidden');
-            ['FormInst', 'FormGlass', 'FormChem'].forEach(t => {
-                document.getElementById(`tab${t}`).className = "py-2 text-gray-500 outline-none";
-            });
-            if (formId === 'FormInst') {
-                document.getElementById('form_instrument').classList.remove('hidden');
-                document.getElementById('tabFormInst').className = "py-2 bg-white text-blue-600 rounded-md shadow-sm font-bold outline-none";
-            } else if (formId === 'FormGlass') {
-                document.getElementById('form_glassware').classList.remove('hidden');
-                document.getElementById('tabFormGlass').className = "py-2 bg-white text-teal-600 rounded-md shadow-sm font-bold outline-none";
-            } else if (formId === 'FormChem') {
-                document.getElementById('form_chemical').classList.remove('hidden');
-                document.getElementById('tabFormChem').className = "py-2 bg-white text-purple-600 rounded-md shadow-sm font-bold outline-none";
-            }
-        }
-
-        // 🛠️ ดักจับเครื่องมือชำรุด
         function addInstrumentToCart() {
             const id = document.getElementById('select_inst').value;
-            const date = document.getElementById('inst_date').value;
-            const start = document.getElementById('inst_start').value;
-            const end = document.getElementById('inst_end').value;
-            if (!id || !date || !start || !end) { alert('กรุณากรอกข้อมูลให้ครบครับ'); return; }
-            
-            // ตรวจสอบสถานะเครื่องมือจากฐานข้อมูลปัจจุบันก่อนใส่ตะกร้า
-            const targetItem = masterData.instruments.find(i => i.id === id);
-            if (targetItem && targetItem.status !== 'Ready') {
-                alert(`❌ ไม่สามารถจองได้: เครื่องมือนี้อยู่ในสถานะ "${targetItem.status}" (ชำรุดหรือปิดปรับปรุง)`);
-                return;
-            }
-
-            cart.push({ item_type: 'Instrument', item_id: id, item_name: targetItem.name, date, start_time: start, end_time: end, chem_quantity: 1, displayDetails: `🛠️ จองใช้วันที่ ${date} [${start}-${end}]`, note: 'ใช้งานเครื่องมือประจำวัน' });
+            const name = masterData.instruments.find(i => i.id === id).name;
+            if (masterData.instruments.find(i => i.id === id).status !== 'Ready') { alert('เครื่องมือไม่พร้อมใช้งาน'); return; }
+            cart.push({ item_type: 'Instrument', item_id: id, item_name: name, date: document.getElementById('inst_date').value, chem_quantity: 1 });
             renderCart();
         }
 
-        // 🧪 บั๊คฟิกซ์: ดักจับการยืมเครื่องแก้วเกินจำนวนคงคลังจริง
         function addGlasswareToCart() {
             const id = document.getElementById('select_glass').value;
             const qty = Number(document.getElementById('glass_qty').value);
-            const bDate = document.getElementById('glass_b_date').value; const bTime = document.getElementById('glass_b_time').value;
-            const rDate = document.getElementById('glass_r_date').value; const rTime = document.getElementById('glass_r_time').value;
-            if (!id || !qty || !bDate || !bTime || !rDate || !rTime) { alert('กรุณาระบุข้อมูลยืม-คืนเครื่องแก้วให้ครบครับ'); return; }
-            if (qty <= 0) { alert('จำนวนที่ระบุต้องมากกว่า 0 ใบครับ'); return; }
-
-            // เช็กยอดคงคลังแบบ Real-time จากสูตรฝั่งชีทที่ดึงมา
-            const targetItem = masterData.glassware.find(g => g.id === id);
-            const availableStock = targetItem.available !== undefined ? Number(targetItem.available) : Number(targetItem.total);
-            
-            // คำนวณจำนวนที่เคยจองไว้ในตะกร้าก่อนหน้านี้ด้วย (ถ้ามี)
-            const alreadyInCart = cart.filter(item => item.item_type === 'Glassware' && item.item_id === id)
-                                      .reduce((sum, item) => sum + item.chem_quantity, 0);
-
-            if ((qty + alreadyInCart) > availableStock) {
-                alert(`❌ สต็อกไม่พอ: ${targetItem.name} คงเหลือในตู้แลปเพียง ${availableStock} ใบเท่านั้น (คุณระบุยืมรวมในตะกร้า: ${qty + alreadyInCart} ใบ)`);
-                return;
-            }
-
-            cart.push({ item_type: 'Glassware', item_id: id, item_name: targetItem.name, date: bDate, start_time: bTime, end_time: rTime, chem_quantity: qty, displayDetails: `🧪 ยืม ${qty} ใบ | คืน: ${rDate} ${rTime}`, note: `ยืมจำนวน ${qty} ใบ [กำหนดคืน: ${rDate} เวลา ${rTime}]` });
+            const target = masterData.glassware.find(g => g.id === id);
+            if (qty > (target.available || target.total)) { alert('สต็อกไม่พอ'); return; }
+            cart.push({ item_type: 'Glassware', item_id: id, item_name: target.name, date: document.getElementById('glass_b_date').value, chem_quantity: qty });
             renderCart();
         }
 
-        // ☣️ บั๊คฟิกซ์: ดักจับการเบิกสารเคมีเกินสต็อกคงเหลือจริง
         function addChemicalToCart() {
             const id = document.getElementById('select_chem').value;
             const qty = Number(document.getElementById('chem_qty').value);
-            const date = document.getElementById('chem_date').value; const time = document.getElementById('chem_time').value;
-            if (!id || !qty || !date || !time) { alert('กรุณากรอกข้อมูลเบิกสารเคมีให้ครบครับ'); return; }
-            if (qty <= 0) { alert('ปริมาณการเบิกต้องมากกว่า 0 ครับ'); return; }
-
-            const targetItem = masterData.chemicals.find(c => c.id === id);
-            const availableStock = targetItem.available !== undefined ? Number(targetItem.available) : Number(targetItem.total);
-            const unit = document.getElementById('chem_unit_label').innerText;
-
-            const alreadyInCart = cart.filter(item => item.item_type === 'Chemical' && item.item_id === id)
-                                      .reduce((sum, item) => sum + item.chem_quantity, 0);
-
-            if ((qty + alreadyInCart) > availableStock) {
-                alert(`❌ สารเคมีไม่พอ: ${targetItem.name} มียอดคงเหลือให้เบิกได้อีกเพียง ${availableStock} ${unit} (คุณระบุเบิกรวมในตะกร้า: ${qty + alreadyInCart} ${unit})`);
-                return;
-            }
-
-            cart.push({ item_type: 'Chemical', item_id: id, item_name: targetItem.name, date, start_time: time, end_time: time, chem_quantity: qty, displayDetails: `☣️ เบิก ${qty} ${unit} | วันที่: ${date}`, note: `เบิกเคมี ${qty} ยอดลดคลัง` });
+            const target = masterData.chemicals.find(c => c.id === id);
+            if (qty > (target.available || target.total)) { alert('สต็อกไม่พอ'); return; }
+            cart.push({ item_type: 'Chemical', item_id: id, item_name: target.name, date: document.getElementById('chem_date').value, chem_quantity: qty });
             renderCart();
         }
 
         function renderCart() {
             const container = document.getElementById('cartSection');
-            container.innerHTML = '';
-            if(cart.length === 0) {
-                document.getElementById('submitAllBtn').disabled = true;
-                return;
-            }
-            cart.forEach((item, index) => {
-                container.innerHTML += `
-                    <div class="flex justify-between items-center py-1.5 border-b">
-                        <span><strong>[${item.item_id}]</strong> ${item.item_name}<br><span class="text-gray-500 text-[11px]">${item.displayDetails}</span></span>
-                        <button onclick="cart.splice(${index}, 1); renderCart();" class="text-red-500 font-bold px-2">❌</button>
-                    </div>`;
-            });
-            document.getElementById('submitAllBtn').disabled = false;
+            container.innerHTML = cart.map((item, idx) => `<div class="flex justify-between py-1">${item.item_name} x ${item.chem_quantity} <button onclick="cart.splice(${idx},1); renderCart()" class="text-red-500">❌</button></div>`).join('');
+            document.getElementById('submitAllBtn').disabled = cart.length === 0;
         }
 
-        // 🔄 ปรับปรุงฟังก์ชันส่งตะกร้าสินค้า ดึงจำนวนจริงลง chem_quantity เพื่อความแม่นยำในการตัดสต็อก
         async function submitMasterCart() {
-            const submitBtn = document.getElementById('submitAllBtn');
-            submitBtn.disabled = true; submitBtn.innerText = "กำลังส่งคำขอเข้าฐานข้อมูล...";
-
-            try {
-                for (let item of cart) {
-                    let payload = {
-                        action: 'newBooking', 
-                        user_email: document.getElementById('user_email').value,
-                        item_type: item.item_type,
-                        item_id: item.item_id,
-                        date: item.date,
-                        start_time: item.start_time,
-                        end_time: item.end_time,
-                        advisor_name: document.getElementById('advisor_name').value,
-                        phone: document.getElementById('phone').value,
-                        chem_quantity: Number(item.chem_quantity) || 1, 
-                        note: item.note
-                    };
-
-                    await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
-                }
-                alert('🎉 ส่งรายการขอใช้ของในแลปทั้งหมดเข้าคิวเรียบร้อย! กรุณารอแอดมินพิจารณาอนุมัติครับ');
-                cart = []; renderCart();
-                await loadData();
-            } catch (err) {
-                alert('เกิดข้อผิดพลาดในการส่งข้อมูล');
-            } finally {
-                submitBtn.disabled = false; submitBtn.innerText = "ส่งคำขอยืมทั้งหมด";
+            for (let item of cart) {
+                await fetch(API_URL, { method: 'POST', body: JSON.stringify({ ...item, action: 'newBooking', user_email: document.getElementById('user_email').value, advisor_name: document.getElementById('advisor_name').value, phone: document.getElementById('phone').value }) });
             }
+            alert('ส่งรายการเรียบร้อย');
+            cart = []; renderCart(); loadData();
         }
 
         function switchTableTab(tab) {
-            ['inst', 'glass', 'chem'].forEach(t => {
-                document.getElementById(`table-${t}`).classList.add('hidden');
-                document.getElementById(`tab-${t}`).className = "py-2 px-3 text-gray-500 outline-none";
-            });
-            document.getElementById(`table-${tab}`).classList.remove('hidden');
-            document.getElementById(`tab-${tab}`).className = "py-2 px-3 text-blue-600 border-b-2 border-blue-600 font-bold outline-none";
+            ['inst', 'glass', 'chem'].forEach(t => document.getElementById(`table-${t}`).classList.toggle('hidden', t !== tab));
         }
 
         function logout() { location.reload(); }
