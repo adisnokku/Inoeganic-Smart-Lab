@@ -3,169 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inorganic Smart Lab - Enterprise Role System</title>
+    <title>Inorganic Smart Lab - Full System</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-50 font-sans">
 
+    <div id="imageModal" class="fixed inset-0 bg-black bg-opacity-70 hidden flex items-center justify-center z-[100] p-4" onclick="this.classList.add('hidden')">
+        <div class="bg-white p-2 rounded-lg max-w-sm w-full" onclick="event.stopPropagation()">
+            <img id="modalImg" src="" class="w-full h-auto rounded" alt="Item Image">
+            <button onclick="document.getElementById('imageModal').classList.add('hidden')" class="w-full mt-3 bg-red-500 text-white py-2 rounded font-bold">ปิด</button>
+        </div>
+    </div>
+
     <div id="loginScreen" class="fixed inset-0 bg-blue-600 flex items-center justify-center z-50 p-4">
         <div class="bg-white p-8 rounded-xl shadow-2xl max-w-md w-full text-center">
-            <span class="text-5xl">🔬</span>
-            <h2 class="text-2xl font-bold text-gray-800 mt-4">Inorganic Smart Lab</h2>
-            <p class="text-sm text-gray-500 mb-6">กรุณากรอกอีเมลมหาวิทยาลัยเพื่อเข้าสู่ระบบ</p>
-            <form id="loginForm" class="space-y-4 text-left">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">อีเมลผู้ใช้งาน</label>
-                    <input type="email" id="login_email" placeholder="yourname@uni.ac.th" required class="mt-1 block w-full rounded-md border border-gray-300 shadow-sm p-3 bg-gray-50 focus:ring-2 focus:ring-blue-500 outline-none">
-                </div>
-                <button type="submit" id="loginBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg shadow transition">เข้าสู่ระบบ</button>
+            <h2 class="text-2xl font-bold mb-6">Inorganic Smart Lab</h2>
+            <form id="loginForm" class="space-y-4">
+                <input type="email" id="login_email" placeholder="อีเมล" required class="w-full p-3 border rounded">
+                <button type="submit" id="loginBtn" class="w-full bg-blue-600 text-white py-3 rounded font-bold">เข้าสู่ระบบ</button>
             </form>
-            <p id="loginError" class="text-red-500 text-sm mt-4 hidden"></p>
+            <p id="loginError" class="text-red-500 mt-4 hidden"></p>
         </div>
     </div>
 
     <div id="mainDashboard" class="hidden">
-        <header class="bg-blue-600 text-white p-4 shadow-md">
-            <div class="container mx-auto flex justify-between items-center">
-                <h1 class="text-xl font-bold">🔬 Inorganic Smart Lab</h1>
-                <div class="flex items-center space-x-4">
-                    <button onclick="refreshData()" id="refreshBtn" class="bg-white text-blue-600 hover:bg-gray-100 px-3 py-1 rounded text-xs font-bold transition shadow-sm border border-white">
-                        🔄 รีเฟรชข้อมูล
-                    </button>
-                    <div class="text-right text-sm">
-                        <span id="userDisplay_name" class="block font-semibold">กำลังโหลด...</span>
-                        <span id="userDisplay_role" class="text-xs bg-orange-500 px-2 py-0.5 rounded font-bold">Loading</span>
-                    </div>
-                    <button onclick="logout()" class="text-xs bg-red-500 hover:bg-red-600 px-3 py-1 rounded transition font-medium">ออกจากระบบ</button>
-                </div>
-            </div>
+        <header class="bg-blue-600 text-white p-4 flex justify-between items-center">
+            <h1 class="font-bold">🔬 Inorganic Smart Lab</h1>
+            <button onclick="location.reload()" class="bg-red-500 px-3 py-1 rounded text-sm">ออก</button>
         </header>
 
-        <main class="container mx-auto p-4 md:p-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
-            
-            <section class="lg:col-span-1 space-y-6">
-                <div id="userBookingPanel" class="bg-white p-6 rounded-lg shadow space-y-4">
-                    <h2 class="text-base font-bold text-gray-800 border-b pb-2">➕ เลือกสิ่งของใส่ตะกร้า (นักศึกษา/อาจารย์)</h2>
-                    <div class="grid grid-cols-3 gap-1 bg-gray-100 p-1 rounded-lg text-xs font-semibold text-center">
-                        <button onclick="switchFormTab('FormInst')" id="tabFormInst" class="py-2 bg-white text-blue-600 rounded-md shadow-sm outline-none">🛠️ เครื่องมือ</button>
-                        <button onclick="switchFormTab('FormGlass')" id="tabFormGlass" class="py-2 text-gray-500 hover:text-blue-600 outline-none">🧪 เครื่องแก้ว</button>
-                        <button onclick="switchFormTab('FormChem')" id="tabFormChem" class="py-2 text-gray-500 hover:text-blue-600 outline-none">☣️ สารเคมี</button>
+        <main class="container mx-auto p-4 grid lg:grid-cols-3 gap-6">
+            <section class="lg:col-span-1">
+                <div class="bg-white p-6 rounded shadow">
+                    <h2 class="font-bold mb-4">🛒 ตะกร้ายืม</h2>
+                    <div class="space-y-4">
+                        <select id="select_type" onchange="updateForm()" class="w-full p-2 border rounded">
+                            <option value="Instrument">เครื่องมือ</option>
+                            <option value="Glassware">เครื่องแก้ว</option>
+                            <option value="Chemical">สารเคมี</option>
+                        </select>
+                        <select id="select_item" class="w-full p-2 border rounded"></select>
+                        <input type="number" id="qty_input" value="1" class="w-full p-2 border rounded">
+                        <button onclick="addToCart()" class="w-full bg-green-600 text-white py-2 rounded font-bold">ใส่ตะกร้า</button>
                     </div>
-
-                    <div id="form_instrument" class="space-y-3">
-                        <div><label class="text-xs font-bold text-gray-700">เลือกเครื่องมือ</label><select id="select_inst" class="mt-1 block w-full rounded-md border border-gray-200 p-2 text-sm"></select></div>
-                        <div><label class="text-xs font-bold text-gray-700">วันที่ใช้งาน</label><input type="date" id="inst_date" class="mt-1 block w-full rounded-md border border-gray-200 p-2 text-sm"></div>
-                        <div class="grid grid-cols-2 gap-2">
-                            <div><label class="text-xs font-bold text-gray-700">⏰ เริ่ม</label><input type="time" id="inst_start" class="mt-1 block w-full rounded-md border border-gray-200 p-2 text-sm"></div>
-                            <div><label class="text-xs font-bold text-gray-700">⏰ สิ้นสุด</label><input type="time" id="inst_end" class="mt-1 block w-full rounded-md border border-gray-200 p-2 text-sm"></div>
-                        </div>
-                        <button type="button" onclick="addInstrumentToCart()" class="w-full bg-blue-600 text-white font-bold py-2 rounded text-xs">🛒 ใส่ตะกร้าเครื่องมือ</button>
-                    </div>
-
-                    <div id="form_glassware" class="space-y-3 hidden">
-                        <div><label class="text-xs font-bold text-gray-700">เลือกเครื่องแก้ว</label><select id="select_glass" class="mt-1 block w-full rounded-md border border-gray-200 p-2 text-sm"></select></div>
-                        <div><label class="text-xs font-bold text-gray-700">จำนวนที่ต้องการยืม (ใบ)</label><input type="number" id="glass_qty" min="1" value="1" class="mt-1 block w-full rounded-md border border-gray-200 p-2 text-sm"></div>
-                        <div class="bg-blue-50 p-2 rounded border border-blue-100 space-y-2 text-xs">
-                            <div class="grid grid-cols-2 gap-1">
-                                <div><label class="font-bold text-blue-800">📅 วันยืม</label><input type="date" id="glass_b_date" class="w-full p-1 rounded"></div>
-                                <div><label class="font-bold text-blue-800">⏰ เวลายืม</label><input type="time" id="glass_b_time" class="w-full p-1 rounded"></div>
-                            </div>
-                            <div class="grid grid-cols-2 gap-1">
-                                <div><label class="font-bold text-red-800">📅 วันคืน</label><input type="date" id="glass_r_date" class="w-full p-1 rounded"></div>
-                                <div><label class="font-bold text-red-800">⏰ เวลาคืน</label><input type="time" id="glass_r_time" class="w-full p-1 rounded"></div>
-                            </div>
-                        </div>
-                        <button type="button" onclick="addGlasswareToCart()" class="w-full bg-teal-600 text-white font-bold py-2 rounded text-xs">🛒 ใส่ตะกร้าเครื่องแก้ว</button>
-                    </div>
-
-                    <div id="form_chemical" class="space-y-3 hidden">
-                        <div><label class="text-xs font-bold text-gray-700">เลือกสารเคมี</label><select id="select_chem" class="mt-1 block w-full rounded-md border border-gray-200 p-2 text-sm"></select></div>
-                        <div><label class="text-xs font-bold text-gray-700">ปริมาณเบิก</label>
-                            <div class="flex space-x-1 mt-1"><input type="number" id="chem_qty" step="any" value="1" class="w-full border border-gray-200 p-2 text-sm rounded"><span id="chem_unit_label" class="p-2 text-xs font-bold bg-gray-100 rounded border">g</span></div>
-                        </div>
-                        <div class="grid grid-cols-2 gap-2">
-                            <div><label class="text-xs font-bold text-gray-700">📅 วันที่เบิก</label><input type="date" id="chem_date" class="mt-1 block w-full rounded-md border border-gray-200 p-2 text-sm"></div>
-                            <div><label class="text-xs font-bold text-gray-700">⏰ เวลาที่เบิก</label><input type="time" id="chem_time" class="mt-1 block w-full rounded-md border border-gray-200 p-2 text-sm"></div>
-                        </div>
-                        <button type="button" onclick="addChemicalToCart()" class="w-full bg-purple-600 text-white font-bold py-2 rounded text-xs">🛒 ใส่ตะกร้าสารเคมี</button>
-                    </div>
-
-                    <div class="pt-4 border-t">
-                        <p class="text-xs font-bold text-gray-600 mb-2">🛒 รายการในตะกร้าของคุณ:</p>
-                        <div id="cartSection" class="divide-y text-xs max-h-32 overflow-y-auto mb-2"></div>
-                        <button type="button" id="submitAllBtn" onclick="submitMasterCart()" disabled class="w-full bg-green-600 text-white font-bold py-2 rounded text-sm disabled:bg-gray-200">ส่งคำขอยืมทั้งหมด</button>
-                    </div>
-                </div>
-
-                <div id="adminStockPanel" class="bg-gradient-to-br from-gray-800 to-gray-900 p-6 rounded-lg shadow-xl text-white space-y-4 hidden">
-                    <h2 class="text-base font-bold border-b border-gray-700 pb-2 flex items-center">⚡ แผงควบคุมคลังสินค้า (Admin)</h2>
-                    <form id="adminStockForm" class="space-y-3 text-sm text-gray-800">
-                        <div>
-                            <label class="block text-xs font-bold text-gray-300 mb-1">1. เลือกประเภทสิ่งของ</label>
-                            <select id="adm_type" onchange="handleAdminTypeChange()" class="w-full p-2 rounded bg-white outline-none">
-                                <option value="Instrument">🛠️ Instrument (เครื่องมือ)</option>
-                                <option value="Glassware">🧪 Glassware (เครื่องแก้ว)</option>
-                                <option value="Chemical">☣️ Chemical (สารเคมี)</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-gray-300 mb-1">2. เลือกไอเทมที่จะปรับปรุงสต็อก</label>
-                            <select id="adm_item_id" class="w-full p-2 rounded bg-white outline-none"></select>
-                        </div>
-                        <div id="adm_status_div">
-                            <label class="block text-xs font-bold text-gray-300 mb-1">3. ปรับสถานะเครื่องมือ</label>
-                            <select id="adm_status_val" class="w-full p-2 rounded bg-white outline-none">
-                                <option value="Ready">Ready (พร้อมใช้งาน)</option>
-                                <option value="Maintenance">Maintenance (ชำรุด/ส่งซ่อม)</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-gray-300 mb-1">4. ระบุจำนวน/สต็อกใหม่ทั้งหมดในคลัง</label>
-                            <input type="number" id="adm_new_qty" placeholder="ระบุตัวเลขจำนวนคงคลังจริง" required class="w-full p-2 rounded bg-white outline-none">
-                        </div>
-                        <button type="submit" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-2.5 rounded shadow text-xs transition mt-2">
-                            💾 บันทึกการอัปเดตยอดคลังสินค้า
-                        </button>
-                    </form>
-                </div>
-                
-                <div class="hidden">
-                    <input type="email" id="user_email">
-                    <input type="text" id="advisor_name">
-                    <input type="tel" id="phone">
+                    <div id="cartList" class="mt-4 border-t pt-2 text-sm"></div>
+                    <button onclick="submitCart()" class="w-full mt-4 bg-blue-600 text-white py-2 rounded">ส่งคำขอ</button>
                 </div>
             </section>
 
-            <section class="lg:col-span-2 space-y-8">
-                <div class="bg-white p-6 rounded-lg shadow">
-                    <h2 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2">📅 รายการคำขอยืมและธุรกรรมล่าสุด</h2>
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200 text-xs">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="p-2 text-left text-gray-600 font-bold">รหัสคำขอ/สิ่งของ</th>
-                                    <th class="p-2 text-left text-gray-600 font-bold">วัน-เวลา</th>
-                                    <th class="p-2 text-left text-gray-600 font-bold">ผู้ใช้/บันทึก</th>
-                                    <th class="p-2 text-center text-gray-600 font-bold">สถานะอนุมัติ</th>
-                                    <th id="thAction" class="p-2 text-center text-gray-600 font-bold hidden">การจัดการ (Admin)</th>
-                                </tr>
-                            </thead>
-                            <tbody id="bookingTableBody" class="divide-y divide-gray-100"></tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <div class="bg-white p-6 rounded-lg shadow space-y-4">
-                    <h2 class="text-lg font-bold text-gray-800 border-b pb-2">📦 ตรวจสอบยอดคลังสินค้าจริง</h2>
-                    <div class="flex space-x-2 border-b text-xs font-medium">
-                        <button onclick="switchTableTab('inst')" id="tab-inst" class="py-2 px-3 text-blue-600 border-b-2 border-blue-600 outline-none">🛠️ เครื่องมือ</button>
-                        <button onclick="switchTableTab('glass')" id="tab-glass" class="py-2 px-3 text-gray-500 outline-none">🧪 เครื่องแก้ว</button>
-                        <button onclick="switchTableTab('chem')" id="tab-chem" class="py-2 px-3 text-gray-500 outline-none">☣️ สารเคมี</button>
-                    </div>
-
-                    <div id="table-inst" class="overflow-x-auto"><table class="min-w-full text-xs divide-y"><thead class="bg-gray-50"><tr><th class="p-2 text-left">ID</th><th class="p-2 text-left">ชื่อเครื่องมือ</th><th class="p-2 text-left">จำนวนทั้งหมด</th><th class="p-2 text-left">สถานะ</th></tr></thead><tbody id="instTableBody" class="divide-y"></tbody></table></div>
-                    <div id="table-glass" class="overflow-x-auto hidden"><table class="min-w-full text-xs divide-y"><thead class="bg-gray-50"><tr><th class="p-2 text-left">ID</th><th class="p-2 text-left">ชื่ออุปกรณ์</th><th class="p-2 text-center">ทั้งหมด</th><th class="p-2 text-center text-orange-600">ยืมอยู่</th><th class="p-2 text-center text-green-600">พร้อมใช้</th></tr></thead><tbody id="glassTableBody" class="divide-y"></tbody></table></div>
-                    <div id="table-chem" class="overflow-x-auto hidden"><table class="min-w-full text-xs divide-y"><thead class="bg-gray-50"><tr><th class="p-2 text-left">ID</th><th class="p-2 text-left">ชื่อสารเคมี</th><th class="p-2 text-left">ประเภท</th><th class="p-2 text-left text-blue-600 font-bold">ยอดคงเหลือ</th></tr></thead><tbody id="chemTableBody" class="divide-y"></tbody></table></div>
+            <section class="lg:col-span-2">
+                <div class="bg-white p-6 rounded shadow overflow-x-auto">
+                    <table class="w-full text-sm text-left">
+                        <thead class="bg-gray-100">
+                            <tr>
+                                <th class="p-2">ชื่อ</th>
+                                <th class="p-2">คงเหลือ</th>
+                                <th class="p-2">รูป</th>
+                            </tr>
+                        </thead>
+                        <tbody id="stockTableBody"></tbody>
+                    </table>
                 </div>
             </section>
         </main>
@@ -173,233 +70,75 @@
 
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbxvj0zOc77ZaXn9WKvrGWHkOHsRVtdZoml-hBzCYm-r_8rgxr_Hk-mmy7y2MEkd5kV2/exec";
-        let currentUser = null;
-        let masterData = null; 
+        let masterData = { instruments: [], glassware: [], chemicals: [] };
         let cart = [];
 
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const emailInput = document.getElementById('login_email').value.trim();
-            const loginBtn = document.getElementById('loginBtn');
-            const errorPara = document.getElementById('loginError');
-
-            loginBtn.disabled = true; loginBtn.innerText = "กำลังตรวจสอบสิทธิ์...";
-            errorPara.classList.add('hidden');
-
-            try {
-                const response = await fetch(`${API_URL}?action=checkUser&email=${encodeURIComponent(emailInput)}`);
-                const result = await response.json();
-
-                if (result.status === "found") {
-                    currentUser = result;
-                    currentUser.email = emailInput;
-                    document.getElementById('user_email').value = emailInput;
-                    document.getElementById('advisor_name').value = result.advisor;
-                    document.getElementById('phone').value = result.phone;
-
-                    document.getElementById('loginScreen').classList.add('hidden');
-                    document.getElementById('mainDashboard').classList.remove('hidden');
-
-                    configureUIByRole();
-                    await loadData();
-                } else {
-                    errorPara.innerText = result.message || "ไม่พบสิทธิ์การเข้าใช้งานระบบแลปนี้";
-                    errorPara.classList.remove('hidden');
-                }
-            } catch (err) {
-                errorPara.innerText = "การเชื่อมต่อเซิร์ฟเวอร์ล้มเหลว กรุณาลองใหม่อีกครั้ง";
-                errorPara.classList.remove('hidden');
-            } finally {
-                loginBtn.disabled = false; loginBtn.innerText = "เข้าสู่ระบบ";
-            }
-        });
-
-        function configureUIByRole() {
-            document.getElementById('userDisplay_name').innerText = currentUser.name;
-            document.getElementById('userDisplay_role').innerText = currentUser.role;
-
-            const userRole = currentUser.role.toString().trim().toLowerCase();
-
-            if (userRole === 'admin' || userRole === 'manager') {
-                document.getElementById('userBookingPanel').classList.add('hidden');
-                document.getElementById('adminStockPanel').classList.remove('hidden');
-                document.getElementById('thAction').classList.remove('hidden');
-                document.getElementById('userDisplay_role').className = "text-xs bg-red-600 px-2 py-0.5 rounded font-bold text-white";
-            } else {
-                document.getElementById('userBookingPanel').classList.remove('hidden');
-                document.getElementById('adminStockPanel').classList.add('hidden');
-                document.getElementById('thAction').classList.add('hidden');
-                document.getElementById('userDisplay_role').className = "text-xs bg-green-600 px-2 py-0.5 rounded font-bold text-white";
-            }
+        // ฟังก์ชันเปิด Modal รูปภาพ
+        function showImage(url) {
+            document.getElementById('modalImg').src = url;
+            document.getElementById('imageModal').classList.remove('hidden');
         }
 
+        // ดึงข้อมูล
         async function loadData() {
-            try {
-                const response = await fetch(API_URL);
-                masterData = await response.json();
-                populateDropdowns();
-                renderBookingTable();
-                renderStockTables();
-                handleAdminTypeChange();
-            } catch (e) {
-                console.error("โหลดข้อมูลล้มเหลว", e);
-            }
+            const res = await fetch(API_URL);
+            masterData = await res.json();
+            renderStock();
+            updateForm();
         }
 
-        async function refreshData() {
-            const btn = document.getElementById('refreshBtn');
-            btn.innerText = "กำลังดึงข้อมูลล่าสุด...";
-            btn.disabled = true;
-            try {
-                await loadData();
-                alert("🎉 อัปเดตข้อมูลล่าสุดเรียบร้อยแล้ว!");
-            } catch (err) {
-                alert("เกิดข้อผิดพลาดในการดึงข้อมูล");
-            } finally {
-                btn.innerText = "🔄 รีเฟรชข้อมูล";
-                btn.disabled = false;
-            }
+        // อัปเดต Dropdown ตามหมวดหมู่
+        function updateForm() {
+            const type = document.getElementById('select_type').value;
+            const select = document.getElementById('select_item');
+            const data = type === 'Instrument' ? masterData.instruments : (type === 'Glassware' ? masterData.glassware : masterData.chemicals);
+            select.innerHTML = data.map(i => `<option value="${i.id}">${i.name} (เหลือ: ${i.available || i.total})</option>`).join('');
         }
 
-        function populateDropdowns() {
-            const selectInst = document.getElementById('select_inst');
-            const selectGlass = document.getElementById('select_glass');
-            const selectChem = document.getElementById('select_chem');
-
-            selectInst.innerHTML = masterData.instruments.map(i => `<option value="${i.id}">${i.name} [สถานะ: ${i.status}]</option>`).join('');
-            selectGlass.innerHTML = masterData.glassware.map(g => {
-                let avail = g.available !== undefined ? g.available : g.total;
-                return `<option value="${g.id}">${g.name} (คงเหลือพร้อมยืม: ${avail} ใบ)</option>`;
-            }).join('');
-            selectChem.innerHTML = masterData.chemicals.map(c => {
-                let avail = c.available !== undefined ? c.available : c.total;
-                return `<option value="${c.id}" data-unit="${c.type || 'g'}">${c.name} (คงเหลือ: ${avail} ${c.type || 'g'})</option>`;
-            }).join('');
-            if(masterData.chemicals.length > 0) updateChemUnitLabel();
-            selectChem.onchange = updateChemUnitLabel;
-        }
-
-        function updateChemUnitLabel() {
-            const select = document.getElementById('select_chem');
-            const unit = select.options[select.selectedIndex]?.getAttribute('data-unit') || 'g';
-            document.getElementById('chem_unit_label').innerText = unit;
-        }
-
-        function renderBookingTable() {
-            const tbody = document.getElementById('bookingTableBody');
-            tbody.innerHTML = '';
-            if(!masterData.bookings || masterData.bookings.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-400">ยังไม่มีรายการธุรกรรม</td></tr>`;
+        // เพิ่มลงตะกร้าพร้อมดักบั๊ค
+        function addToCart() {
+            const type = document.getElementById('select_type').value;
+            const id = document.getElementById('select_item').value;
+            const qty = Number(document.getElementById('qty_input').value);
+            const item = (type === 'Instrument' ? masterData.instruments : (type === 'Glassware' ? masterData.glassware : masterData.chemicals)).find(i => i.id == id);
+            
+            if (qty > (item.available || item.total)) {
+                alert("❌ จำนวนในสต็อกไม่พอ");
                 return;
             }
-            const isAdmin = currentUser.role.toString().trim().toLowerCase() === 'admin';
-            const sortedBookings = [...masterData.bookings].reverse();
-
-            sortedBookings.forEach(b => {
-                let statusStyle = "bg-yellow-100 text-yellow-800";
-                if(b.status === "Approved") statusStyle = "bg-green-100 text-green-800 font-bold";
-                if(b.status === "Rejected") statusStyle = "bg-red-100 text-red-800";
-                if(b.status === "Returned") statusStyle = "bg-blue-100 text-blue-800";
-
-                let actionHtml = '';
-                if(isAdmin) {
-                    if(b.status === "Pending Approval") {
-                        actionHtml = `<div class="flex justify-center space-x-1"><button onclick="updateBookingStatus('${b.booking_id}', 'Approved')" class="bg-green-500 text-white px-2 py-1 rounded font-bold text-[10px]">อนุมัติ</button><button onclick="updateBookingStatus('${b.booking_id}', 'Rejected')" class="bg-red-500 text-white px-2 py-1 rounded font-bold text-[10px]">ปฏิเสธ</button></div>`;
-                    } else if(b.status === "Approved" && b.item_type !== "Chemical") {
-                        actionHtml = `<button onclick="updateBookingStatus('${b.booking_id}', 'Returned')" class="w-full bg-blue-500 text-white px-2 py-1 rounded font-bold text-[10px]">🔄 รับคืน</button>`;
-                    }
-                }
-
-                tbody.innerHTML += `
-                    <tr class="border-b">
-                        <td class="p-2 font-bold">${b.booking_id}<br><span class="text-[10px] font-normal">${b.item_type}</span></td>
-                        <td class="p-2">${b.date}</td>
-                        <td class="p-2 text-[11px]">${b.user_email}<br>${b.note || '-'}</td>
-                        <td class="p-2 text-center"><span class="px-2 py-1 rounded-full text-[10px] ${statusStyle}">${b.status}</span></td>
-                        ${isAdmin ? `<td class="p-2 border-l">${actionHtml}</td>` : ''}
-                    </tr>`;
-            });
+            cart.push({ type, id, name: item.name, qty });
+            document.getElementById('cartList').innerHTML += `<div>${item.name} x ${qty}</div>`;
         }
 
-        function renderStockTables() {
-            document.getElementById('instTableBody').innerHTML = masterData.instruments.map(i => `<tr class="border-b"><td class="p-2">${i.id}</td><td class="p-2">${i.name}</td><td class="p-2">${i.total}</td><td class="p-2 text-${i.status === 'Ready'?'green':'red'}-600">${i.status}</td></tr>`).join('');
-            document.getElementById('glassTableBody').innerHTML = masterData.glassware.map(g => `<tr class="border-b"><td class="p-2">${g.id}</td><td class="p-2">${g.name}</td><td class="p-2 text-center">${g.total}</td><td class="p-2 text-center">${g.booked || 0}</td><td class="p-2 text-center">${g.available !== undefined ? g.available : g.total}</td></tr>`).join('');
-            document.getElementById('chemTableBody').innerHTML = masterData.chemicals.map(c => `<tr class="border-b"><td class="p-2">${c.id}</td><td class="p-2">${c.name}</td><td class="p-2">${c.type}</td><td class="p-2">${c.available || c.total} ${c.type}</td></tr>`).join('');
+        // แสดงผลตารางสต็อก
+        function renderStock() {
+            const allItems = [...masterData.instruments, ...masterData.glassware, ...masterData.chemicals];
+            document.getElementById('stockTableBody').innerHTML = allItems.map(i => `
+                <tr class="border-b">
+                    <td class="p-2">${i.name}</td>
+                    <td class="p-2">${i.available || i.total}</td>
+                    <td class="p-2 cursor-pointer" onclick="showImage('${i.image_url}')">🖼️</td>
+                </tr>
+            `).join('');
         }
 
-        async function updateBookingStatus(id, status) {
-            if (!confirm(`ยืนยันการทำรายการ ${status}?`)) return;
-            const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'updateStatus', booking_id: id, status: status }) });
-            if ((await res.json()).status === 'success') { loadData(); }
-        }
-
-        document.getElementById('adminStockForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const payload = { action: 'updateStock', item_type: document.getElementById('adm_type').value, item_id: document.getElementById('adm_item_id').value, new_qty: document.getElementById('adm_new_qty').value, status_val: document.getElementById('adm_status_val').value };
-            await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
-            alert('บันทึกเรียบร้อย');
-            loadData();
-        });
-
-        function handleAdminTypeChange() {
-            const type = document.getElementById('adm_type').value;
-            const itemSelect = document.getElementById('adm_item_id');
-            itemSelect.innerHTML = '';
-            let target = type === 'Instrument' ? masterData.instruments : type === 'Glassware' ? masterData.glassware : masterData.chemicals;
-            target.forEach(i => itemSelect.innerHTML += `<option value="${i.id}">${i.id} - ${i.name}</option>`);
-        }
-
-        function switchFormTab(t) {
-            ['form_instrument','form_glassware','form_chemical'].forEach((f, idx) => {
-                document.getElementById(f).classList.toggle('hidden', idx !== (t==='FormInst'?0:t==='FormGlass'?1:2));
-            });
-        }
-
-        function addInstrumentToCart() {
-            const id = document.getElementById('select_inst').value;
-            const name = masterData.instruments.find(i => i.id === id).name;
-            if (masterData.instruments.find(i => i.id === id).status !== 'Ready') { alert('เครื่องมือไม่พร้อมใช้งาน'); return; }
-            cart.push({ item_type: 'Instrument', item_id: id, item_name: name, date: document.getElementById('inst_date').value, chem_quantity: 1 });
-            renderCart();
-        }
-
-        function addGlasswareToCart() {
-            const id = document.getElementById('select_glass').value;
-            const qty = Number(document.getElementById('glass_qty').value);
-            const target = masterData.glassware.find(g => g.id === id);
-            if (qty > (target.available || target.total)) { alert('สต็อกไม่พอ'); return; }
-            cart.push({ item_type: 'Glassware', item_id: id, item_name: target.name, date: document.getElementById('glass_b_date').value, chem_quantity: qty });
-            renderCart();
-        }
-
-        function addChemicalToCart() {
-            const id = document.getElementById('select_chem').value;
-            const qty = Number(document.getElementById('chem_qty').value);
-            const target = masterData.chemicals.find(c => c.id === id);
-            if (qty > (target.available || target.total)) { alert('สต็อกไม่พอ'); return; }
-            cart.push({ item_type: 'Chemical', item_id: id, item_name: target.name, date: document.getElementById('chem_date').value, chem_quantity: qty });
-            renderCart();
-        }
-
-        function renderCart() {
-            const container = document.getElementById('cartSection');
-            container.innerHTML = cart.map((item, idx) => `<div class="flex justify-between py-1">${item.item_name} x ${item.chem_quantity} <button onclick="cart.splice(${idx},1); renderCart()" class="text-red-500">❌</button></div>`).join('');
-            document.getElementById('submitAllBtn').disabled = cart.length === 0;
-        }
-
-        async function submitMasterCart() {
-            for (let item of cart) {
-                await fetch(API_URL, { method: 'POST', body: JSON.stringify({ ...item, action: 'newBooking', user_email: document.getElementById('user_email').value, advisor_name: document.getElementById('advisor_name').value, phone: document.getElementById('phone').value }) });
+        // ส่งข้อมูล
+        async function submitCart() {
+            for(let item of cart) {
+                await fetch(API_URL, { method: 'POST', body: JSON.stringify({...item, action: 'newBooking'}) });
             }
-            alert('ส่งรายการเรียบร้อย');
-            cart = []; renderCart(); loadData();
+            alert("บันทึกข้อมูลเรียบร้อย");
+            cart = [];
+            document.getElementById('cartList').innerHTML = "";
+            loadData();
         }
 
-        function switchTableTab(tab) {
-            ['inst', 'glass', 'chem'].forEach(t => document.getElementById(`table-${t}`).classList.toggle('hidden', t !== tab));
-        }
-
-        function logout() { location.reload(); }
+        document.getElementById('loginForm').onsubmit = (e) => {
+            e.preventDefault();
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('mainDashboard').classList.remove('hidden');
+            loadData();
+        };
     </script>
 </body>
 </html>
