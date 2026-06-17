@@ -82,7 +82,7 @@
                     <div id="form_chemical" class="space-y-3 hidden">
                         <div><label class="text-xs font-bold text-gray-700">เลือกสารเคมี</label><select id="select_chem" class="mt-1 block w-full rounded-md border border-gray-200 p-2 text-sm"></select></div>
                         <div><label class="text-xs font-bold text-gray-700">ปริมาณเบิก</label>
-                            <div class="flex space-x-1 mt-1"><input type="number" id="chem_qty" step="any" class="w-full border border-gray-200 p-2 text-sm rounded"><span id="chem_unit_label" class="p-2 text-xs font-bold bg-gray-100 rounded border">g</span></div>
+                            <div class="flex space-x-1 mt-1"><input type="number" id="chem_qty" step="any" value="1" class="w-full border border-gray-200 p-2 text-sm rounded"><span id="chem_unit_label" class="p-2 text-xs font-bold bg-gray-100 rounded border">g</span></div>
                         </div>
                         <div class="grid grid-cols-2 gap-2">
                             <div><label class="text-xs font-bold text-gray-700">📅 วันที่เบิก</label><input type="date" id="chem_date" class="mt-1 block w-full rounded-md border border-gray-200 p-2 text-sm"></div>
@@ -173,7 +173,7 @@
     </div>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbxvj0zOc77ZaXn9WKvrGWHkOHsRVtdZoml-hBzCYm-r_8rgxr_Hk-mmy7y2MEkd5kV2/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycbyqGj5SaA-Hq599sAYGODKBjGzj5LIdR6Gr_47khZn4Rw1eSXK-ug1H0Y6U_vq5i0R4/exec";
         let currentUser = null;
         let masterData = null; 
         let cart = [];
@@ -492,14 +492,15 @@
             document.getElementById('submitAllBtn').disabled = false;
         }
 
+        // 🔄 ปรับปรุงฟังก์ชันส่งตะกร้าสินค้า ดึงจำนวนจริงลง chem_quantity เพื่อความแม่นยำในการตัดสต็อก
         async function submitMasterCart() {
             const submitBtn = document.getElementById('submitAllBtn');
-            submitBtn.disabled = true; submitBtn.innerText = "กำลังยิงคำขอเข้าฐานข้อมูล...";
+            submitBtn.disabled = true; submitBtn.innerText = "กำลังส่งคำขอเข้าฐานข้อมูล...";
 
             try {
                 for (let item of cart) {
                     let payload = {
-                        action: 'newBooking',
+                        action: 'newBooking', 
                         user_email: document.getElementById('user_email').value,
                         item_type: item.item_type,
                         item_id: item.item_id,
@@ -508,7 +509,7 @@
                         end_time: item.end_time,
                         advisor_name: document.getElementById('advisor_name').value,
                         phone: document.getElementById('phone').value,
-                        chem_quantity: item.chem_quantity, 
+                        chem_quantity: Number(item.chem_quantity) || 1, 
                         note: item.note
                     };
 
@@ -516,7 +517,7 @@
                 }
                 alert('🎉 ส่งรายการขอใช้ของในแลปทั้งหมดเข้าคิวเรียบร้อย! กรุณารอแอดมินพิจารณาอนุมัติครับ');
                 cart = []; renderCart();
-                loadData();
+                await loadData();
             } catch (err) {
                 alert('เกิดข้อผิดพลาดในการส่งข้อมูล');
             } finally {
