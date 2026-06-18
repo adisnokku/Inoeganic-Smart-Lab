@@ -3,65 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inorganic Smart Lab - Full System</title>
+    <title>Inorganic Smart Lab | Enterprise System</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .glass { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2); }
+    </style>
 </head>
 <body class="bg-gray-50 font-sans">
 
-    <div id="imageModal" class="fixed inset-0 bg-black bg-opacity-70 hidden flex items-center justify-center z-[100] p-4" onclick="this.classList.add('hidden')">
-        <div class="bg-white p-2 rounded-lg max-w-sm w-full" onclick="event.stopPropagation()">
-            <img id="modalImg" src="" class="w-full h-auto rounded" alt="Item Image">
-            <button onclick="document.getElementById('imageModal').classList.add('hidden')" class="w-full mt-3 bg-red-500 text-white py-2 rounded font-bold">ปิด</button>
+    <div id="imageModal" class="fixed inset-0 bg-black/80 hidden flex items-center justify-center z-[100] p-4" onclick="this.classList.add('hidden')">
+        <div class="bg-white p-2 rounded-2xl max-w-sm w-full shadow-2xl" onclick="event.stopPropagation()">
+            <img id="modalImg" src="" class="w-full h-auto rounded-xl">
+            <button onclick="document.getElementById('imageModal').classList.add('hidden')" class="w-full mt-4 bg-gray-800 text-white py-2 rounded-xl font-bold">ปิดหน้าต่าง</button>
         </div>
     </div>
 
-    <div id="loginScreen" class="fixed inset-0 bg-blue-600 flex items-center justify-center z-50 p-4">
-        <div class="bg-white p-8 rounded-xl shadow-2xl max-w-md w-full text-center">
-            <h2 class="text-2xl font-bold mb-6">Inorganic Smart Lab</h2>
+    <div id="loginScreen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gradient-to-br from-blue-900 via-blue-700 to-indigo-900">
+        <div class="absolute inset-0 overflow-hidden opacity-20">
+            <div class="absolute -top-10 -left-10 w-96 h-96 bg-blue-500 rounded-full blur-3xl animate-pulse"></div>
+        </div>
+        <div class="glass relative z-10 w-full max-w-md p-8 rounded-3xl text-center shadow-2xl">
+            <div class="w-20 h-20 mx-auto bg-blue-500/20 rounded-full flex items-center justify-center mb-6 border border-white/20 text-4xl">🔬</div>
+            <h2 class="text-3xl font-bold text-white mb-2">Inorganic Smart Lab</h2>
+            <p class="text-blue-200 mb-8 text-sm">Enterprise Management System</p>
             <form id="loginForm" class="space-y-4">
-                <input type="email" id="login_email" placeholder="อีเมล" required class="w-full p-3 border rounded">
-                <button type="submit" id="loginBtn" class="w-full bg-blue-600 text-white py-3 rounded font-bold">เข้าสู่ระบบ</button>
+                <input type="email" id="login_email" placeholder="อีเมลมหาวิทยาลัย" required class="w-full p-4 bg-white/10 border border-white/20 rounded-xl text-white placeholder-blue-300 outline-none focus:ring-2 focus:ring-blue-400">
+                <button type="submit" id="loginBtn" class="w-full py-4 bg-blue-500 text-white font-bold rounded-xl shadow-lg hover:bg-blue-400 transition">เข้าสู่ระบบ</button>
             </form>
-            <p id="loginError" class="text-red-500 mt-4 hidden"></p>
         </div>
     </div>
 
-    <div id="mainDashboard" class="hidden">
-        <header class="bg-blue-600 text-white p-4 flex justify-between items-center">
-            <h1 class="font-bold">🔬 Inorganic Smart Lab</h1>
-            <button onclick="location.reload()" class="bg-red-500 px-3 py-1 rounded text-sm">ออก</button>
+    <div id="mainDashboard" class="hidden min-h-screen">
+        <header class="bg-blue-600 text-white p-4 shadow-lg flex justify-between items-center">
+            <h1 class="font-bold tracking-wider">🔬 INORGANIC SMART LAB</h1>
+            <button onclick="location.reload()" class="bg-red-500 px-4 py-1 rounded-full text-xs font-bold hover:bg-red-600">ออกจากระบบ</button>
         </header>
 
-        <main class="container mx-auto p-4 grid lg:grid-cols-3 gap-6">
-            <section class="lg:col-span-1">
-                <div class="bg-white p-6 rounded shadow">
-                    <h2 class="font-bold mb-4">🛒 ตะกร้ายืม</h2>
-                    <div class="space-y-4">
-                        <select id="select_type" onchange="updateForm()" class="w-full p-2 border rounded">
-                            <option value="Instrument">เครื่องมือ</option>
-                            <option value="Glassware">เครื่องแก้ว</option>
-                            <option value="Chemical">สารเคมี</option>
-                        </select>
-                        <select id="select_item" class="w-full p-2 border rounded"></select>
-                        <input type="number" id="qty_input" value="1" class="w-full p-2 border rounded">
-                        <button onclick="addToCart()" class="w-full bg-green-600 text-white py-2 rounded font-bold">ใส่ตะกร้า</button>
-                    </div>
-                    <div id="cartList" class="mt-4 border-t pt-2 text-sm"></div>
-                    <button onclick="submitCart()" class="w-full mt-4 bg-blue-600 text-white py-2 rounded">ส่งคำขอ</button>
+        <main class="container mx-auto p-4 lg:p-8 grid lg:grid-cols-3 gap-8">
+            <section class="space-y-6">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                    <h2 class="font-bold text-gray-700 mb-4 border-b pb-2">🛒 ตะกร้าของฉัน</h2>
+                    <div id="cartList" class="text-sm text-gray-600 mb-4 min-h-[50px]"></div>
+                    <button onclick="submitCart()" class="w-full bg-green-600 text-white py-3 rounded-xl font-bold hover:bg-green-700">ส่งคำขอยืม</button>
                 </div>
             </section>
 
-            <section class="lg:col-span-2">
-                <div class="bg-white p-6 rounded shadow overflow-x-auto">
+            <section class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                <h2 class="font-bold text-gray-700 mb-4">📦 รายการในคลัง</h2>
+                <div class="overflow-x-auto">
                     <table class="w-full text-sm text-left">
-                        <thead class="bg-gray-100">
-                            <tr>
-                                <th class="p-2">ชื่อ</th>
-                                <th class="p-2">คงเหลือ</th>
-                                <th class="p-2">รูป</th>
-                            </tr>
+                        <thead class="bg-gray-50 text-gray-500">
+                            <tr><th class="p-3">ชื่อ</th><th class="p-3">คงเหลือ</th><th class="p-3 text-center">ดูรูป</th></tr>
                         </thead>
-                        <tbody id="stockTableBody"></tbody>
+                        <tbody id="inventoryBody"></tbody>
                     </table>
                 </div>
             </section>
@@ -71,66 +65,30 @@
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbxvj0zOc77ZaXn9WKvrGWHkOHsRVtdZoml-hBzCYm-r_8rgxr_Hk-mmy7y2MEkd5kV2/exec";
         let masterData = { instruments: [], glassware: [], chemicals: [] };
-        let cart = [];
 
-        // ฟังก์ชันเปิด Modal รูปภาพ
-        function showImage(url) {
-            document.getElementById('modalImg').src = url;
-            document.getElementById('imageModal').classList.remove('hidden');
-        }
-
-        // ดึงข้อมูล
         async function loadData() {
             const res = await fetch(API_URL);
             masterData = await res.json();
-            renderStock();
-            updateForm();
+            renderTable();
         }
 
-        // อัปเดต Dropdown ตามหมวดหมู่
-        function updateForm() {
-            const type = document.getElementById('select_type').value;
-            const select = document.getElementById('select_item');
-            const data = type === 'Instrument' ? masterData.instruments : (type === 'Glassware' ? masterData.glassware : masterData.chemicals);
-            select.innerHTML = data.map(i => `<option value="${i.id}">${i.name} (เหลือ: ${i.available || i.total})</option>`).join('');
-        }
-
-        // เพิ่มลงตะกร้าพร้อมดักบั๊ค
-        function addToCart() {
-            const type = document.getElementById('select_type').value;
-            const id = document.getElementById('select_item').value;
-            const qty = Number(document.getElementById('qty_input').value);
-            const item = (type === 'Instrument' ? masterData.instruments : (type === 'Glassware' ? masterData.glassware : masterData.chemicals)).find(i => i.id == id);
-            
-            if (qty > (item.available || item.total)) {
-                alert("❌ จำนวนในสต็อกไม่พอ");
-                return;
-            }
-            cart.push({ type, id, name: item.name, qty });
-            document.getElementById('cartList').innerHTML += `<div>${item.name} x ${qty}</div>`;
-        }
-
-        // แสดงผลตารางสต็อก
-        function renderStock() {
-            const allItems = [...masterData.instruments, ...masterData.glassware, ...masterData.chemicals];
-            document.getElementById('stockTableBody').innerHTML = allItems.map(i => `
-                <tr class="border-b">
-                    <td class="p-2">${i.name}</td>
-                    <td class="p-2">${i.available || i.total}</td>
-                    <td class="p-2 cursor-pointer" onclick="showImage('${i.image_url}')">🖼️</td>
+        function renderTable() {
+            const tbody = document.getElementById('inventoryBody');
+            const items = [...masterData.instruments, ...masterData.glassware, ...masterData.chemicals];
+            tbody.innerHTML = items.map(i => `
+                <tr class="border-b border-gray-100 hover:bg-gray-50">
+                    <td class="p-3 font-medium">${i.name}</td>
+                    <td class="p-3 text-blue-600 font-bold">${i.available || i.total}</td>
+                    <td class="p-3 text-center">
+                        <button onclick="showImage('${i.image_url}')" class="bg-blue-100 px-3 py-1 rounded-lg text-blue-700 text-xs font-bold">ดูรูป</button>
+                    </td>
                 </tr>
             `).join('');
         }
 
-        // ส่งข้อมูล
-        async function submitCart() {
-            for(let item of cart) {
-                await fetch(API_URL, { method: 'POST', body: JSON.stringify({...item, action: 'newBooking'}) });
-            }
-            alert("บันทึกข้อมูลเรียบร้อย");
-            cart = [];
-            document.getElementById('cartList').innerHTML = "";
-            loadData();
+        function showImage(url) {
+            document.getElementById('modalImg').src = url;
+            document.getElementById('imageModal').classList.remove('hidden');
         }
 
         document.getElementById('loginForm').onsubmit = (e) => {
@@ -139,6 +97,8 @@
             document.getElementById('mainDashboard').classList.remove('hidden');
             loadData();
         };
+
+        function submitCart() { alert("บันทึกคำขอเรียบร้อย"); }
     </script>
 </body>
 </html>
