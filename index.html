@@ -1,551 +1,371 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inorganic Smart Lab | Enterprise System</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        .glass { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2); }
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-    </style>
+  <meta charset="UTF-8">
+  <title>Smart Lab Management System</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Chakrapetch:wght@400;600;700&family=Sarabun:wght@400;500;700&display=swap" rel="stylesheet">
+  
+  <style>
+    body { font-family: 'Sarabun', sans-serif; }
+    h1, h2, h3, nav { font-family: 'Chakrapetch', sans-serif; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+  </style>
 </head>
-<body class="bg-slate-50 font-sans antialiased text-slate-800">
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
 
-    <div id="imageModal" class="fixed inset-0 bg-black/80 hidden flex items-center justify-center z-[100] p-4" onclick="this.classList.add('hidden')">
-        <div class="bg-white p-3 rounded-2xl max-w-sm w-full shadow-2xl" onclick="event.stopPropagation()">
-            <div class="relative overflow-hidden rounded-xl bg-slate-100 aspect-square flex items-center justify-center">
-                <img id="modalImg" src="" class="w-full h-full object-cover" alt="Lab Item">
-            </div>
-            <button onclick="document.getElementById('imageModal').classList.add('hidden')" class="w-full mt-4 bg-slate-900 hover:bg-slate-800 text-white py-2.5 rounded-xl font-bold text-sm transition">
-                ปิดหน้าต่าง
-            </button>
+  <script>
+    let currentUser = null;
+    let globalData = {};
+    let selectedItem = null;
+
+    function escapeHtml(text) {
+      if (!text) return '';
+      return text.toString().replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
+  </script>
+
+  <div id="loginScreen" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900 bg-opacity-80 px-4">
+    <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center">
+      <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 text-2xl mx-auto mb-4">
+        <i class="fa-solid fa-flask-vial"></i>
+      </div>
+      <h2 class="text-2xl font-bold mb-2 text-slate-800">Smart Lab System</h2>
+      <p class="text-sm text-slate-500 mb-6">กรุณากรอกอีเมลมหาวิทยาลัยที่ลงทะเบียนเพื่อใช้งาน</p>
+      <form id="loginForm" onsubmit="handleLogin(event)">
+        <div class="mb-4 text-left">
+          <label class="block text-sm font-semibold text-slate-700 mb-2">อีเมลผู้ใช้งาน</label>
+          <input type="email" id="loginEmail" required class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="yourname@university.ac.th">
         </div>
+        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-xl transition">
+          เข้าสู่ระบบ <i class="fa-solid fa-arrow-right ml-2"></i>
+        </button>
+      </form>
     </div>
+  </div>
 
-    <div id="loginScreen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-950">
-        <div class="absolute inset-0 overflow-hidden opacity-30 pointer-events-none">
-            <div class="absolute -top-40 -left-40 w-[600px] h-[600px] bg-blue-500 rounded-full blur-[120px] animate-pulse"></div>
-            <div class="absolute -bottom-40 -right-40 w-[600px] h-[600px] bg-indigo-500 rounded-full blur-[120px] animate-pulse delay-1000"></div>
+  <div id="appContainer" class="hidden flex-1 flex flex-col">
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm px-6 py-4 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <i class="fa-solid fa-microscope text-blue-600 text-2xl"></i>
+        <span class="text-xl font-bold text-slate-800">SMART LAB</span>
+      </div>
+      <div class="flex items-center space-x-4">
+        <div class="text-right hidden sm:block">
+          <p class="text-sm font-bold text-slate-800" id="userName">Loading...</p>
+          <p class="text-xs text-slate-500" id="userRoleBadge">Loading...</p>
         </div>
-        
-        <div class="glass relative z-10 w-full max-w-md p-8 rounded-3xl text-center shadow-2xl border border-white/10">
-            <div class="w-20 h-20 mx-auto bg-gradient-to-tr from-blue-500 to-indigo-500 rounded-2xl flex items-center justify-center mb-6 shadow-xl text-4xl text-white">🔬</div>
-            <h2 class="text-3xl font-black text-white mb-2 tracking-tight">Inorganic Smart Lab</h2>
-            <p class="text-blue-200/70 mb-8 text-sm font-medium">ระบบบริหารจัดการห้องปฏิบัติการอัจฉริยะ</p>
-            
-            <form id="loginForm" class="space-y-4 text-left">
-                <div>
-                    <label class="block text-xs font-semibold text-blue-200 mb-2 uppercase tracking-wider">University Email</label>
-                    <input type="email" id="login_email" placeholder="example@university.ac.th" required 
-                        class="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-400 outline-none focus:ring-2 focus:ring-blue-400 transition bg-opacity-20 backdrop-blur-sm">
-                </div>
-                <button type="submit" id="loginBtn" class="w-full py-4 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-bold rounded-xl shadow-lg transform active:scale-[0.98] transition">
-                    เข้าสู่ระบบ / Access System
-                </button>
-            </form>
-            <p id="loginError" class="text-red-400 mt-4 text-sm font-medium hidden bg-red-500/10 p-2 rounded-lg border border-red-500/20"></p>
+        <button onclick="handleLogout()" class="text-slate-400 hover:text-red-500 transition"><i class="fa-solid fa-right-from-bracket text-lg"></i></button>
+      </div>
+    </header>
+
+    <nav class="bg-white border-b border-slate-200 px-6 flex space-x-6 overflow-x-auto shadow-sm">
+      <button onclick="switchTab('inventoryTab')" id="btn-inventoryTab" class="py-3 px-2 border-b-2 border-blue-600 font-medium text-blue-600 text-sm focus:outline-none flex items-center gap-2"><i class="fa-solid fa-boxes-stacked"></i> คลังสิ่งของ</button>
+      <button onclick="switchTab('bookingsTab')" id="btn-bookingsTab" class="py-3 px-2 border-b-2 border-transparent text-slate-500 hover:text-slate-800 text-sm focus:outline-none flex items-center gap-2"><i class="fa-solid fa-receipt"></i> ประวัติคำขอ</button>
+      <button onclick="switchTab('adminTab')" id="btn-adminTab" class="hidden py-3 px-2 border-b-2 border-transparent text-rose-600 text-sm focus:outline-none flex items-center gap-2"><i class="fa-solid fa-user-shield"></i> แอดมินจัดการคำขอ</button>
+    </nav>
+
+    <main class="flex-1 p-6 max-w-7xl w-full mx-auto">
+      <div id="inventoryTab" class="tab-content active space-y-8">
+        <div class="flex flex-wrap gap-3">
+          <button onclick="filterInventory('Instrument')" id="sub-Instrument" class="bg-blue-600 text-white text-xs font-semibold px-4 py-2 rounded-full shadow-sm">Instruments</button>
+          <button onclick="filterInventory('Glassware')" id="sub-Glassware" class="bg-white text-slate-600 text-xs font-semibold px-4 py-2 rounded-full border">Glassware</button>
+          <button onclick="filterInventory('Chemical')" id="sub-Chemical" class="bg-white text-slate-600 text-xs font-semibold px-4 py-2 rounded-full border">Chemicals</button>
         </div>
+        <div id="inventoryGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"></div>
+      </div>
+
+      <div id="bookingsTab" class="tab-content space-y-4">
+        <h2 class="text-lg font-bold text-slate-800 mb-4"><i class="fa-solid fa-clock-rotate-left mr-2"></i>รายการและประวัติของคุณ</h2>
+        <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-slate-50 text-slate-500 text-xs font-semibold border-b">
+                <th class="p-4">Booking ID</th><th class="p-4">ประเภท</th><th class="p-4">ID ของ</th><th class="p-4">จำนวน</th><th class="p-4">วันที่บันทึก</th><th class="p-4">สถานะ</th>
+              </tr>
+            </thead>
+            <tbody id="userBookingsTable" class="text-sm divide-y"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="adminTab" class="tab-content space-y-4">
+        <h2 class="text-lg font-bold text-rose-700 mb-4"><i class="fa-solid fa-lock-open mr-2"></i>ระบบอนุมัติและหักสต็อกสำหรับผู้ดูแลคลัง</h2>
+        <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-slate-50 text-slate-500 text-xs font-semibold border-b">
+                <th class="p-4">Booking ID</th><th class="p-4">ผู้ยืม</th><th class="p-4">ประเภท / ID</th><th class="p-4">จำนวน</th><th class="p-4">เวลาปฏิบัติงาน</th><th class="p-4">สถานะ</th><th class="p-4 text-center">จัดการ</th>
+              </tr>
+            </thead>
+            <tbody id="adminBookingsTable" class="text-sm divide-y"></tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div id="borrowModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900 bg-opacity-60 px-4">
+    <div class="bg-white rounded-2xl shadow-xl max-w-lg w-full overflow-hidden">
+      <div class="bg-slate-900 text-white px-6 py-4 flex items-center justify-between">
+        <h3 id="modalTitle" class="font-bold text-lg">แบบฟอร์มคำขอทำรายการ</h3>
+        <button onclick="closeBorrowModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+      <form id="borrowForm" onsubmit="submitBorrowRequest(event)" class="p-6 space-y-4">
+        <div id="modalStockAlert" class="p-3 bg-blue-50 text-blue-700 text-xs rounded-xl flex items-center gap-2 font-medium"></div>
+        <div id="timeSection" class="grid grid-cols-2 gap-4"></div>
+        <div>
+          <label class="block text-xs font-bold text-slate-600 mb-1">จำนวนที่ต้องการเบิก/ยืม</label>
+          <div class="relative rounded-xl shadow-sm">
+            <input type="number" id="requestQty" required min="1" step="any" oninput="validateQtyLimit(this)" class="w-full px-4 py-2.5 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-sm font-bold text-slate-400" id="unitBadge">ชิ้น</div>
+          </div>
+          <p id="qtyErrorMsg" class="text-red-500 text-xs mt-1 font-semibold hidden">คุณกรอกเกินจำนวนคงเหลือในคลัง!</p>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-600 mb-1">เหตุผลในการเบิก/บันทึกข้อความ</label>
+          <textarea id="requestNote" rows="2" class="w-full px-4 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="ระบุวัตถุประสงค์..."></textarea>
+        </div>
+        <button type="submit" id="submitRequestBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl shadow-md">ยืนยันส่งใบคำขอ <i class="fa-solid fa-paper-plane ml-1"></i></button>
+      </form>
     </div>
+  </div>
 
-    <div id="mainDashboard" class="hidden min-h-screen flex flex-col">
-        <header class="bg-slate-900 border-b border-slate-800 text-white px-6 py-4 shadow-xl flex justify-between items-center sticky top-0 z-40">
-            <div class="flex items-center gap-4">
-                <div class="text-2xl">🧪</div>
-                <div>
-                    <h1 class="font-black text-sm tracking-wider uppercase text-blue-400">INORGANIC SMART LAB</h1>
-                    <div class="flex items-center gap-2 mt-0.5">
-                        <span id="userName" class="text-xs text-slate-400 font-medium">กำลังโหลด...</span>
-                        <span id="roleBadge" class="text-[9px] bg-blue-500/20 text-blue-300 border border-blue-500/30 px-2 py-0.5 rounded-full uppercase tracking-widest font-black">USER</span>
-                    </div>
-                </div>
-            </div>
-            <div class="flex items-center gap-2">
-                <button onclick="loadAllData()" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 p-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5">
-                    🔄 <span class="hidden md:inline">รีเฟรช</span>
-                </button>
-                <button onclick="location.reload()" class="bg-red-500/10 hover:bg-red-500 hover:text-white border border-red-500/20 text-red-400 px-4 py-2 rounded-xl text-xs font-bold transition">
-                    ออกจากระบบ
-                </button>
-            </div>
-        </header>
-
-        <main class="container mx-auto p-4 lg:p-8 grid grid-cols-1 lg:grid-cols-3 gap-8 flex-1">
-            
-            <section class="space-y-6 lg:col-span-1">
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60">
-                    <h2 class="font-bold text-slate-800 text-lg mb-4 flex items-center gap-2">🛒 ทำรายการคำขอห้องแลป</h2>
-                    
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block text-xs font-bold text-slate-500 mb-1">1. เลือกประเภทอุปกรณ์</label>
-                            <select id="typeSelect" onchange="handleTypeChange()" class="w-full p-3 border border-slate-200 rounded-xl bg-slate-50 outline-none focus:ring-2 focus:ring-blue-500/20 font-medium">
-                                <option value="instruments">⚙️ เครื่องมือวิเคราะห์ (Instruments)</option>
-                                <option value="glassware">🧪 เครื่องแก้ววิทยาศาสตร์ (Glassware)</option>
-                                <option value="chemicals">⚗️ สารเคมีห้องแลป (Chemicals)</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label class="block text-xs font-bold text-slate-500 mb-1">2. เลือกรายการสิ่งของ</label>
-                            <select id="itemSelect" class="w-full p-3 border border-slate-200 rounded-xl bg-slate-50 outline-none focus:ring-2 focus:ring-blue-500/20 font-medium">
-                                <option value="">-- กำลังโหลดข้อมูลสิ่งของ --</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label class="block text-xs font-bold text-slate-500 mb-1">3. ระบุจำนวนที่ต้องการ</label>
-                            <input type="number" id="qtyInput" value="1" min="1" class="w-full p-3 border border-slate-200 rounded-xl bg-slate-50 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-center">
-                        </div>
-
-                        <div id="dynamicDateBox" class="p-4 bg-slate-50 border border-slate-100 rounded-xl space-y-3">
-                            </div>
-
-                        <button onclick="addItemToCart()" class="w-full bg-slate-900 hover:bg-slate-800 text-white p-3 rounded-xl font-bold text-sm transition">
-                            + บันทึกใส่ลงตะกร้า
-                        </button>
-                    </div>
-
-                    <div class="mt-6 border-t border-slate-100 pt-4">
-                        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">รายการในตะกร้าของคุณ</h3>
-                        <div id="cartBox" class="space-y-2 max-h-[220px] overflow-y-auto custom-scrollbar text-sm font-medium">
-                            <p class="text-slate-400 text-xs italic py-2">ไม่มีสินค้าในตะกร้าในขณะนี้</p>
-                        </div>
-                        <button onclick="submitCartToBackend()" id="submitCartBtn" disabled class="w-full mt-4 bg-green-600 hover:bg-green-700 disabled:bg-slate-200 disabled:text-slate-400 text-white py-3 rounded-xl font-bold text-sm transition shadow-lg">
-                            ส่งคำขออนุมัติทั้งหมด
-                        </button>
-                    </div>
-                </div>
-            </section>
-
-            <section class="lg:col-span-2 space-y-8">
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden">
-                    <div class="p-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
-                        <h2 class="font-bold text-slate-800 text-md flex items-center gap-2">⚙️ คลังเครื่องมือวิเคราะห์ (Instruments)</h2>
-                        <span class="text-xs bg-slate-200 px-2 py-0.5 rounded font-bold text-slate-600" id="countInst">0</span>
-                    </div>
-                    <div class="overflow-x-auto custom-scrollbar max-h-[200px]">
-                        <table class="w-full text-sm text-left whitespace-nowrap">
-                            <thead class="bg-slate-50 text-slate-500 sticky top-0 border-b border-slate-100 text-xs">
-                                <tr><th class="p-3">รหัส</th><th class="p-3">ชื่อรายการ</th><th class="p-3 text-center">พร้อมใช้งาน</th><th class="p-3 text-center">รูปภาพ</th></tr>
-                            </thead>
-                            <tbody id="instTableBody" class="divide-y divide-slate-100 font-medium">
-                                <tr><td colspan="4" class="p-4 text-center text-slate-400 italic">ไม่มีข้อมูลการโหลด...</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden">
-                    <div class="p-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
-                        <h2 class="font-bold text-slate-800 text-md flex items-center gap-2">🧪 คลังเครื่องแก้ววิทยาศาสตร์ (Glassware)</h2>
-                        <span class="text-xs bg-slate-200 px-2 py-0.5 rounded font-bold text-slate-600" id="countGlass">0</span>
-                    </div>
-                    <div class="overflow-x-auto custom-scrollbar max-h-[200px]">
-                        <table class="w-full text-sm text-left whitespace-nowrap">
-                            <thead class="bg-slate-50 text-slate-500 sticky top-0 border-b border-slate-100 text-xs">
-                                <tr><th class="p-3">รหัส</th><th class="p-3">ชื่อรายการ</th><th class="p-3 text-center">พร้อมใช้งาน</th><th class="p-3 text-center">รูปภาพ</th></tr>
-                            </thead>
-                            <tbody id="glassTableBody" class="divide-y divide-slate-100 font-medium">
-                                <tr><td colspan="4" class="p-4 text-center text-slate-400 italic">ไม่มีข้อมูลการโหลด...</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden">
-                    <div class="p-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
-                        <h2 class="font-bold text-slate-800 text-md flex items-center gap-2">⚗️ คลังสารเคมีห้องแลป (Chemicals)</h2>
-                        <span class="text-xs bg-slate-200 px-2 py-0.5 rounded font-bold text-slate-600" id="countChem">0</span>
-                    </div>
-                    <div class="overflow-x-auto custom-scrollbar max-h-[200px]">
-                        <table class="w-full text-sm text-left whitespace-nowrap">
-                            <thead class="bg-slate-50 text-slate-500 sticky top-0 border-b border-slate-100 text-xs">
-                                <tr><th class="p-3">รหัส</th><th class="p-3">ชื่อรายการ</th><th class="p-3 text-center">พร้อมใช้งาน</th><th class="p-3 text-center">รูปภาพ</th></tr>
-                            </thead>
-                            <tbody id="chemTableBody" class="divide-y divide-slate-100 font-medium">
-                                <tr><td colspan="4" class="p-4 text-center text-slate-400 italic">ไม่มีข้อมูลการโหลด...</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden">
-                    <div class="p-6 border-b border-slate-100 bg-blue-50/30">
-                        <h2 class="font-bold text-slate-800 text-lg flex items-center gap-2 text-blue-900">📋 สถานะการทำงานปัจจุบัน (My Booking History)</h2>
-                    </div>
-                    <div class="overflow-x-auto custom-scrollbar max-h-[250px]">
-                        <table class="w-full text-sm text-left">
-                            <thead class="bg-slate-50 text-slate-500 font-bold text-xs border-b border-slate-100">
-                                <tr><th>รหัสคิว</th><th>ชื่อสิ่งของ</th><th class="text-center">จำนวน</th><th>กำหนดเวลา / วันที่นัด</th><th class="text-center">สถานะ</th></tr>
-                            </thead>
-                            <tbody id="myBookingHistoryBody" class="divide-y divide-slate-100 font-medium">
-                                <tr><td colspan="5" class="p-6 text-center text-slate-400 italic">ไม่มีรายการค้างอยู่</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden">
-                    <div class="p-6 border-b border-slate-100 bg-emerald-50/30">
-                        <h2 class="font-bold text-slate-800 text-lg flex items-center gap-2 text-emerald-900">🗄️ บันทึกประวัติการใช้แลปย้อนหลัง (Usage Logs)</h2>
-                    </div>
-                    <div class="overflow-x-auto custom-scrollbar max-h-[250px]">
-                        <table class="w-full text-sm text-left">
-                            <thead class="bg-slate-50 text-slate-500 font-bold text-xs border-b border-slate-100">
-                                <tr><th>รหัสอ้างอิง</th><th>ชื่อสิ่งของ</th><th class="text-center">จำนวน</th><th>รายละเอียดเวลา</th><th class="text-center">ผลลัพธ์</th></tr>
-                            </thead>
-                            <tbody id="usageLogsTableBody" class="divide-y divide-slate-100 font-medium">
-                                <tr><td colspan="5" class="p-6 text-center text-slate-400 italic">ไม่มีบันทึกประวัติเก่า</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </section>
-        </main>
+  <div id="loadingSpinner" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900 bg-opacity-40">
+    <div class="bg-white p-5 rounded-2xl flex items-center space-x-3 shadow-lg">
+      <svg class="animate-spin h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+      <span class="text-sm font-semibold text-slate-700">กำลังสื่อสารกับคลาวด์ Google Sheets...</span>
     </div>
+  </div>
 
-    <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbykNc2ZmDU0arqN3V2_nc29hxh6k_2LTCnSiSb9PA-absrMG7jiRP_vGB7pTZpKeiT4/exec";
-        let masterData = { instruments: [], glassware: [], chemicals: [], bookings: [] };
-        let userCart = [];
-        let accountSession = null;
+  <script>
+    // 🔗 เปลี่ยนเส้นทางมายิงเข้า API ทางตรงผ่าน Fetch API เพื่อเปิดเล่นบนเครื่องคอมพิวเตอร์ของคุณเอง
+    const API_URL = "ใส่_WEB_APP_URL_ที่ได้จาก_GOOGLE_APPS_SCRIPT_ที่นี่";
 
-        document.getElementById('loginForm').onsubmit = async (e) => {
-            e.preventDefault();
-            const emailField = document.getElementById('login_email');
-            const submitBtn = document.getElementById('loginBtn');
-            const errBox = document.getElementById('loginError');
+    async function callBackend(actionName, data = {}) {
+      const payload = { action: actionName, ...data };
+      const response = await fetch(API_URL, {
+        method: "POST",
+        mode: "cors",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify(payload)
+      });
+      return await response.json();
+    }
 
-            submitBtn.disabled = true;
-            submitBtn.innerText = "กำลังตรวจสอบความปลอดภัย...";
-            errBox.classList.add('hidden');
+    async function handleLogin(event) {
+      event.preventDefault();
+      const email = document.getElementById("loginEmail").value.trim();
+      if(!email) return;
+      
+      toggleLoading(true);
+      try {
+        const result = await callBackend("checkUser", { email: email });
+        if (result.status === "success") {
+          currentUser = result.user;
+          document.getElementById("loginScreen").classList.add("hidden");
+          document.getElementById("appContainer").classList.remove("hidden");
+          document.getElementById("userName").innerText = escapeHtml(currentUser.name);
+          document.getElementById("userRoleBadge").innerText = `${escapeHtml(currentUser.role)} | ${escapeHtml(currentUser.department)}`;
+          
+          if(currentUser.role === "Admin") document.getElementById("btn-adminTab").classList.remove("hidden");
+          await refreshData();
+        } else {
+          alert(result.message);
+        }
+      } catch (err) {
+        alert("เชื่อมต่อล้มเหลว: " + err.toString());
+      } finally {
+        toggleLoading(false);
+      }
+    }
 
-            try {
-                const checkUrl = `${API_URL}?action=checkUser&email=${encodeURIComponent(emailField.value.trim())}`;
-                const res = await fetch(checkUrl);
-                const user = await res.json();
+    function handleLogout() {
+      currentUser = null;
+      document.getElementById("loginScreen").classList.remove("hidden");
+      document.getElementById("appContainer").classList.add("hidden");
+      document.getElementById("btn-adminTab").classList.add("hidden");
+    }
 
-                if (user.status === "found") {
-                    accountSession = user;
-                    accountSession.email = emailField.value.trim().toLowerCase();
-                    
-                    document.getElementById('loginScreen').classList.add('hidden');
-                    document.getElementById('mainDashboard').classList.remove('hidden');
-                    document.getElementById('userName').innerText = user.name;
-                    document.getElementById('roleBadge').innerText = user.role;
-                    
-                    await loadAllData();
-                } else {
-                    showLoginError(user.message || "ไม่พบอีเมลนี้ในระบบสิทธิ์การใช้งานแลป");
-                }
-            } catch (err) {
-                showLoginError("ไม่สามารถติดต่อเซิร์ฟเวอร์คลังได้");
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.innerText = "เข้าสู่ระบบ / Access System";
-            }
-        };
+    async function refreshData() {
+      if(!currentUser) return;
+      try {
+        const result = await callBackend("getInitialData", { email: currentUser.email });
+        if(result.status === "success") {
+          globalData = result;
+          filterInventory('Instrument');
+          renderUserBookings();
+          if(currentUser.role === "Admin") renderAdminBookings();
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
 
-        function showLoginError(msg) {
-            const errBox = document.getElementById('loginError');
-            errBox.innerText = "❌ " + msg;
-            errBox.classList.remove('hidden');
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+      document.querySelectorAll('nav button').forEach(btn => btn.classList.replace('text-blue-600', 'text-slate-500'));
+      document.getElementById(`btn-${tabId}`).classList.replace('text-slate-500', 'text-blue-600');
+    }
+
+    function filterInventory(type) {
+      document.querySelectorAll('[id^="sub-"]').forEach(btn => btn.classList.replace('bg-blue-600', 'bg-white'));
+      document.getElementById(`sub-${type}`).classList.replace('bg-white', 'bg-blue-600');
+
+      const grid = document.getElementById("inventoryGrid");
+      grid.innerHTML = "";
+      let items = type === 'Instrument' ? globalData.instruments : (type === 'Glassware' ? globalData.glassware : globalData.chemicals);
+
+      items.forEach(item => {
+        const id = item.ID;
+        const name = item.Name;
+        const img = item.Image_url || item.image_url || "https://images.unsplash.com/photo-1532187863486-abf9d39d6618?w=500";
+        let stockText = "", limitStock = 0, badgeHtml = "";
+
+        if(type === 'Instrument') {
+          limitStock = Number(item.Available);
+          stockText = `คงเหลือพร้อมใช้: ${limitStock} ชิ้น (คลังทั้งหมด: ${item.Total})`;
+          badgeHtml = `<span class="absolute top-2 left-2 bg-slate-700 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow">${escapeHtml(item.Brand || 'No Brand')}</span>`;
+        } else if(type === 'Glassware') {
+          limitStock = Number(item.Available);
+          stockText = `พร้อมใช้: ${limitStock} ชิ้น`;
+          if(limitStock <= Number(item.min_stock)) badgeHtml = `<span class="absolute top-2 left-2 bg-amber-500 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow">สต็อกวิกฤต</span>`;
+        } else if(type === 'Chemical') {
+          limitStock = Number(item.Total);
+          const unit = item.Unit || "หน่วย";
+          stockText = `ปริมาณคงเหลือ: ${limitStock} ${unit}`;
+          badgeHtml = `<span class="absolute top-2 left-2 ${Number(item.Hazard_level) > 2 ? 'bg-rose-600' : 'bg-slate-700'} text-white text-[10px] font-bold px-2 py-0.5 rounded shadow">Hazard Lvl: ${item.Hazard_level}</span>`;
         }
 
-        async function loadAllData() {
-            try {
-                const response = await fetch(API_URL);
-                masterData = await response.json();
-                
-                renderSplitTables(); 
-                handleTypeChange(); // จัดการฟอร์มวันเวลาเริ่มต้น
-                renderUserBookingHistoryAndLogs();
-            } catch (error) {
-                alert("โหลดข้อมูลคลังไม่สำเร็จ");
-            }
+        const card = document.createElement("div");
+        card.className = "bg-white border rounded-2xl shadow-sm overflow-hidden flex flex-col relative hover:shadow-md transition";
+        card.innerHTML = `
+          ${badgeHtml}
+          <div class="h-40 w-full bg-slate-100 bg-cover bg-center" style="background-image: url('${escapeHtml(img)}')"></div>
+          <div class="p-4 flex-1 flex flex-col justify-between">
+            <div>
+              <p class="text-xs text-slate-400 font-bold mb-0.5">ID: ${escapeHtml(id)}</p>
+              <h4 class="font-bold text-slate-800 text-base line-clamp-2 mb-2">${escapeHtml(name)}</h4>
+              <p class="text-xs text-slate-500 font-medium">${stockText}</p>
+            </div>
+            <button onclick="openBorrowModal('${type}', '${escapeHtml(id)}')" class="mt-4 w-full bg-slate-100 hover:bg-blue-600 text-slate-700 hover:text-white font-semibold py-2 rounded-xl text-xs transition">ทำรายการเบิก/ยืม</button>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    function openBorrowModal(type, id) {
+      let items = type === 'Instrument' ? globalData.instruments : (type === 'Glassware' ? globalData.glassware : globalData.chemicals);
+      selectedItem = items.find(i => i.ID.toString() === id.toString());
+      selectedItem._type = type;
+
+      const timeSection = document.getElementById("timeSection");
+      const maxStock = type === "Chemical" ? Number(selectedItem.Total) : Number(selectedItem.Available);
+      const unit = type === "Chemical" ? (selectedItem.Unit || "หน่วย") : "ชิ้น";
+      
+      document.getElementById("requestQty").value = "";
+      document.getElementById("unitBadge").innerText = unit;
+      document.getElementById("modalStockAlert").innerText = `คลังคงเหลือให้เบิกได้สูงสุด: ${maxStock} ${unit}`;
+      document.getElementById("qtyErrorMsg").classList.add("hidden");
+
+      if (type === "Instrument") {
+        timeSection.innerHTML = `<div><label class="block text-xs font-bold text-slate-600 mb-1">เริ่มยืม</label><input type="datetime-local" id="startTime" required class="w-full px-3 py-2 border rounded-xl text-xs"></div><div><label class="block text-xs font-bold text-slate-600 mb-1">ส่งคืน</label><input type="datetime-local" id="endTime" required class="w-full px-3 py-2 border rounded-xl text-xs"></div>`;
+      } else if (type === "Glassware") {
+        timeSection.innerHTML = `<div><label class="block text-xs font-bold text-slate-600 mb-1">วันที่ยืม</label><input type="date" id="startTime" required class="w-full px-3 py-2 border rounded-xl text-xs"></div><div><label class="block text-xs font-bold text-slate-600 mb-1">วันที่คืน</label><input type="date" id="endTime" required class="w-full px-3 py-2 border rounded-xl text-xs"></div>`;
+      } else {
+        timeSection.innerHTML = `<div class="col-span-2"><label class="block text-xs font-bold text-slate-600 mb-1">วันเวลานัดรับสารเคมี</label><input type="datetime-local" id="startTime" required class="w-full px-3 py-2 border rounded-xl text-xs"></div>`;
+      }
+      document.getElementById("borrowModal").classList.remove("hidden");
+    }
+
+    function closeBorrowModal() { document.getElementById("borrowModal").classList.add("hidden"); }
+
+    function validateQtyLimit(input) {
+      const max = selectedItem._type === "Chemical" ? Number(selectedItem.Total) : Number(selectedItem.Available);
+      const invalid = Number(input.value) > max;
+      document.getElementById("qtyErrorMsg").classList[invalid ? 'remove' : 'add']("hidden");
+      document.getElementById("submitRequestBtn").disabled = invalid;
+    }
+
+    async function submitBorrowRequest(event) {
+      event.preventDefault();
+      const payload = {
+        user_email: currentUser.email, advisor: currentUser.advisor, tel: currentUser.phone,
+        item_type: selectedItem._type, item_id: selectedItem.ID,
+        quantity: document.getElementById("requestQty").value, note: document.getElementById("requestNote").value,
+        start_time: document.getElementById("startTime")?.value || "", end_time: document.getElementById("endTime")?.value || "",
+        hazard_level: selectedItem.Hazard_level || 0
+      };
+
+      closeBorrowModal();
+      toggleLoading(true);
+      try {
+        const result = await callBackend("createBooking", payload);
+        alert(result.message);
+        if(result.status === "success") await refreshData();
+      } catch (err) {
+        alert("ล้มเหลว: " + err.toString());
+      } finally {
+        toggleLoading(false);
+      }
+    }
+
+    function renderUserBookings() {
+      const tbody = document.getElementById("userBookingsTable");
+      tbody.innerHTML = globalData.bookings.length === 0 ? `<tr><td colspan="6" class="p-4 text-center text-slate-400">ยังไม่มีประวัติในระบบ</td></tr>` : "";
+      
+      globalData.bookings.forEach(b => {
+        const row = document.createElement("tr");
+        row.innerHTML = `<td class="p-4 font-mono text-xs font-bold">${escapeHtml(b.Booking_ID)}</td><td class="p-4">${escapeHtml(b.Item_Type)}</td><td class="p-4 font-mono">${escapeHtml(b.Item_ID)}</td><td class="p-4 font-bold">${Number(b.Quantity)}</td><td class="p-4 text-slate-500">${escapeHtml(b.Date).split('T')[0]}</td><td class="p-4"><span class="px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100">${escapeHtml(b.Status)}</span></td>`;
+        tbody.appendChild(row);
+      });
+    }
+
+    function renderAdminBookings() {
+      const tbody = document.getElementById("adminBookingsTable");
+      tbody.innerHTML = "";
+      globalData.bookings.forEach(b => {
+        let act = `<span class="text-slate-400 text-xs">เสร็จสิ้น</span>`;
+        if (b.Status === "Pending") {
+          act = `<button onclick="changeStatus('${escapeHtml(b.Booking_ID)}', 'Approved')" class="bg-emerald-600 text-white text-xs px-2.5 py-1 rounded-lg mr-1">อนุมัติ</button><button onclick="changeStatus('${escapeHtml(b.Booking_ID)}', 'Cancelled')" class="bg-slate-200 text-slate-700 text-xs px-2.5 py-1 rounded-lg">ปฏิเสธ</button>`;
+        } else if (b.Status === "Approved" && b.Item_Type !== "Chemical") {
+          act = `<button onclick="openReturnProcess('${escapeHtml(b.Booking_ID)}')" class="bg-blue-600 text-white text-xs px-3 py-1 rounded-lg">รับคืน</button>`;
         }
+        const row = document.createElement("tr");
+        row.innerHTML = `<td class="p-4 font-mono text-xs font-bold">${escapeHtml(b.Booking_ID)}</td><td class="p-4 text-xs"><b>${escapeHtml(b.User_Email)}</b><br>อ.: ${escapeHtml(b.Advisor)}</td><td class="p-4 text-xs">${escapeHtml(b.Item_Type)}<br><span class="text-slate-400">ID: ${escapeHtml(b.Item_ID)}</span></td><td class="p-4 font-bold text-center">${Number(b.Quantity)}</td><td class="p-4 text-[11px] text-slate-500">${escapeHtml(b.Start_Time) || "-"}<br>${escapeHtml(b.End_Time) || "-"}</td><td class="p-4"><span class="px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100">${escapeHtml(b.Status)}</span></td><td class="p-4 text-center">${act}</td>`;
+        tbody.appendChild(row);
+      });
+    }
 
-        // ฟังก์ชันเปลี่ยนหน้าตากล่องกรอกวันเวลาตามประเภทคลังที่เลือก
-        function handleTypeChange() {
-            const cat = document.getElementById('typeSelect').value;
-            const dateBox = document.getElementById('dynamicDateBox');
-            
-            filterItemDropdown(); // อัปเดตรายการสิ่งของตามประเภทก่อน
+    async function changeStatus(bookingId, newStatus, extraData = {}) {
+      if(!currentUser || currentUser.role !== "Admin") return;
+      toggleLoading(true);
+      try {
+        const result = await callBackend("updateBookingStatus", { booking_id: bookingId, new_status: newStatus, admin_email: currentUser.email, ...extraData });
+        alert(result.message);
+        if(result.status === "success") await refreshData();
+      } catch (e) {
+        alert("ผิดพลาด: " + e.toString());
+      } finally {
+        toggleLoading(false);
+      }
+    }
 
-            if (cat === "instruments") {
-                dateBox.innerHTML = `
-                    <div>
-                        <label class="block text-[11px] font-bold text-blue-700 mb-1">📅 วันเวลาที่เริ่มต้นเข้าใช้งานเครื่องมือ</label>
-                        <input type="datetime-local" id="timeStart" required class="w-full p-2 border border-slate-200 rounded-lg text-xs outline-none bg-white">
-                    </div>
-                    <div>
-                        <label class="block text-[11px] font-bold text-blue-700 mb-1">🏁 วันเวลาที่สิ้นสุดการใช้งานเครื่องมือ</label>
-                        <input type="datetime-local" id="timeEnd" required class="w-full p-2 border border-slate-200 rounded-lg text-xs outline-none bg-white">
-                    </div>
-                `;
-            } else if (cat === "glassware") {
-                dateBox.innerHTML = `
-                    <div>
-                        <label class="block text-[11px] font-bold text-amber-700 mb-1">📅 วันที่ต้องการยืมเครื่องแก้ว</label>
-                        <input type="date" id="dateBorrow" required class="w-full p-2 border border-slate-200 rounded-lg text-xs outline-none bg-white">
-                    </div>
-                    <div>
-                        <label class="block text-[11px] font-bold text-amber-700 mb-1">↩️ วันที่กำหนดส่งคืนเครื่องแก้ว</label>
-                        <input type="date" id="dateReturn" required class="w-full p-2 border border-slate-200 rounded-lg text-xs outline-none bg-white">
-                    </div>
-                `;
-            } else if (cat === "chemicals") {
-                dateBox.innerHTML = `
-                    <div>
-                        <label class="block text-[11px] font-bold text-emerald-700 mb-1">📅 วันและเวลาที่จะเข้ามารับสารเคมี</label>
-                        <input type="datetime-local" id="timePickup" required class="w-full p-2 border border-slate-200 rounded-lg text-xs outline-none bg-white">
-                    </div>
-                `;
-            }
-        }
+    function openReturnProcess(bookingId) {
+      const cond = prompt("ระบุสภาพสิ่งของ (Normal, Damaged, Lost):", "Normal");
+      if(!cond) return;
+      let fine = 0;
+      if(cond.toLowerCase() !== "normal") fine = prompt("ค่าปรับ (บาท):", "0");
+      changeStatus(bookingId, 'Returned', { condition: cond, fine_amount: fine });
+    }
 
-        function renderSplitTables() {
-            const insts = masterData.instruments || [];
-            const glass = masterData.glassware || [];
-            const chems = masterData.chemicals || [];
-
-            document.getElementById('countInst').innerText = `${insts.length}`;
-            document.getElementById('countGlass').innerText = `${glass.length}`;
-            document.getElementById('countChem').innerText = `${chems.length}`;
-
-            document.getElementById('instTableBody').innerHTML = generateTableRows(insts);
-            document.getElementById('glassTableBody').innerHTML = generateTableRows(glass);
-            document.getElementById('chemTableBody').innerHTML = generateTableRows(chems);
-        }
-
-        function generateTableRows(items) {
-            if(items.length === 0) return `<tr><td colspan="4" class="p-3 text-center text-slate-400 italic">ไม่มีสิ่งของในหมวดนี้</td></tr>`;
-            return items.map(item => {
-                const stockQty = Number(item.available !== undefined ? item.available : item.total || 0);
-                return `
-                    <tr class="border-b border-slate-100 hover:bg-slate-50/80 transition text-xs">
-                        <td class="p-3 font-mono text-slate-400">${item.id || '-'}</td>
-                        <td class="p-3 text-slate-900 font-bold">${item.name || 'ไม่มีชื่อ'}</td>
-                        <td class="p-3 text-center font-bold ${stockQty > 0 ? 'text-blue-600' : 'text-red-500'}">${stockQty}</td>
-                        <td class="p-3 text-center">
-                            <button onclick="popOpenImageModal('${item.image_url}')" class="bg-slate-100 hover:bg-blue-50 border border-slate-200 px-2 py-1 rounded font-bold transition">🖼️ ดูรูป</button>
-                        </td>
-                    </tr>
-                `;
-            }).join('');
-        }
-
-        function filterItemDropdown() {
-            const currentCategory = document.getElementById('typeSelect').value;
-            const dropdown = document.getElementById('itemSelect');
-            const targetData = masterData[currentCategory] || [];
-
-            if (targetData.length === 0) {
-                dropdown.innerHTML = `<option value="">-- ไม่มีข้อมูลในหมวดนี้ --</option>`;
-                return;
-            }
-            dropdown.innerHTML = targetData.map(item => {
-                const stockQty = Number(item.available !== undefined ? item.available : item.total || 0);
-                return `<option value="${item.id}">${item.name} (คงเหลือ: ${stockQty})</option>`;
-            }).join('');
-        }
-
-        // เพิ่มของลงตะกร้าพร้อมดึงวันเวลาที่กรอกมาบันทึกเก็บไว้ใน Object
-        function addItemToCart() {
-            const cat = document.getElementById('typeSelect').value;
-            const selectedId = document.getElementById('itemSelect').value;
-            const requestQty = Number(document.getElementById('qtyInput').value);
-
-            if(!selectedId) { alert("กรุณาเลือกสิ่งของก่อนครับ"); return; }
-            if(requestQty <= 0) { alert("ระบุจำนวนที่มากกว่า 0"); return; }
-
-            // ตรวจสอบเช็กค่าวันเวลาตามเงื่อนไขของแต่ละหมวดหมู่
-            let dateDetailsText = "";
-            let metaDates = {};
-
-            if (cat === "instruments") {
-                const start = document.getElementById('timeStart').value;
-                const end = document.getElementById('timeEnd').value;
-                if(!start || !end) { alert("❌ กรุณาระบุเวลาเริ่มและสิ้นสุดการจองใช้เครื่องมือให้ครบถ้วน"); return; }
-                dateDetailsText = `⏱️ ใช้: ${start.replace('T',' ')} ถึง ${end.replace('T',' ')}`;
-                metaDates = { start_time: start, end_time: end };
-            } else if (cat === "glassware") {
-                const bDate = document.getElementById('dateBorrow').value;
-                const rDate = document.getElementById('dateReturn').value;
-                if(!bDate || !rDate) { alert("❌ กรุณาระบุวันที่ยืมและกำหนดคืนเครื่องแก้วให้ครบถ้วน"); return; }
-                dateDetailsText = `📅 ยืม: ${bDate} | คืน: ${rDate}`;
-                metaDates = { start_time: bDate, end_time: rDate };
-            } else if (cat === "chemicals") {
-                const pickup = document.getElementById('timePickup').value;
-                if(!pickup) { alert("❌ กรุณาระบุวันเวลาที่จะเข้ามารับสารเคมีด้วยครับ"); return; }
-                dateDetailsText = `📦 นัดรับสารเคมี: ${pickup.replace('T',' ')}`;
-                metaDates = { start_time: pickup, end_time: "" };
-            }
-
-            const originalItem = masterData[cat].find(i => i.id.toString() === selectedId.toString());
-            const currentInStock = Number(originalItem.available !== undefined ? originalItem.available : originalItem.total || 0);
-
-            const existingInCart = userCart.find(c => c.id.toString() === selectedId.toString() && c.cat === cat);
-            const totalRequested = (existingInCart ? existingInCart.qty : 0) + requestQty;
-
-            if (totalRequested > currentInStock) {
-                alert(`❌ จำนวนไม่พอ: ในคลังมีให้ยืมแค่ ${currentInStock} ชิ้นเท่านั้นครับ`);
-                return;
-            }
-
-            if(existingInCart) {
-                existingInCart.qty = totalRequested;
-                existingInCart.dateText = dateDetailsText;
-                existingInCart.meta = metaDates;
-            } else {
-                userCart.push({ 
-                    cat: cat, 
-                    id: originalItem.id, 
-                    name: originalItem.name, 
-                    qty: requestQty,
-                    dateText: dateDetailsText,
-                    meta: metaDates
-                });
-            }
-            updateCartUiView();
-        }
-
-        function removeCartItem(idx) {
-            userCart.splice(idx, 1);
-            updateCartUiView();
-        }
-
-        function updateCartUiView() {
-            const container = document.getElementById('cartBox');
-            const submitBtn = document.getElementById('submitCartBtn');
-
-            if(userCart.length === 0) {
-                container.innerHTML = `<p class="text-slate-400 text-xs italic py-2">ไม่มีสินค้าในตะกร้าในขณะนี้</p>`;
-                submitBtn.disabled = true;
-                return;
-            }
-
-            submitBtn.disabled = false;
-            container.innerHTML = userCart.map((item, index) => `
-                <div class="bg-slate-50 border border-slate-100 p-2.5 rounded-xl space-y-1">
-                    <div class="flex justify-between items-start">
-                        <div class="truncate font-bold text-slate-800 text-xs">${item.name}</div>
-                        <button onclick="removeCartItem(${index})" class="text-xs text-red-500 hover:bg-red-50 w-5 h-5 rounded font-bold shrink-0">✕</button>
-                    </div>
-                    <div class="text-[10px] text-slate-500 flex justify-between">
-                        <span>จำนวนเบิก: <b class="text-blue-600">${item.qty}</b></span>
-                    </div>
-                    <div class="text-[9px] bg-white p-1 rounded border border-slate-200/60 text-slate-600 font-mono font-medium">${item.dateText}</div>
-                </div>
-            `).join('');
-        }
-
-        function renderUserBookingHistoryAndLogs() {
-            const historyBody = document.getElementById('myBookingHistoryBody');
-            const logsBody = document.getElementById('usageLogsTableBody');
-            const rawBookings = masterData.bookings || [];
-            
-            const myAllRecords = rawBookings.filter(b => b.user_email && b.user_email.toString().trim().toLowerCase() === accountSession.email);
-
-            const activeStatuses = ["pending approval", "approved", "borrowing", "pending"];
-            const currentActiveHistory = myAllRecords.filter(b => activeStatuses.includes(b.status.toString().trim().toLowerCase()));
-            const finishedStatuses = ["returned", "rejected", "cancelled", "done"];
-            const pastUsageLogs = myAllRecords.filter(b => finishedStatuses.includes(b.status.toString().trim().toLowerCase()));
-
-            if(currentActiveHistory.length === 0) {
-                historyBody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-400 italic">ไม่มีรายการค้างอยู่</td></tr>`;
-            } else {
-                historyBody.innerHTML = currentActiveHistory.map(b => {
-                    // จัดการประกอบข้อความแสดงผลเงื่อนไขวันเวลาในตารางประวัติ
-                    let displayTimeStr = b.date || '-';
-                    if (b.start_time) {
-                        displayTimeStr = b.end_time ? `⏱️ ${b.start_time.replace('T',' ')} ถึง ${b.end_time.replace('T',' ')}` : `📦 รับของ: ${b.start_time.replace('T',' ')}`;
-                    }
-                    return `
-                        <tr class="text-xs border-b">
-                            <td class="p-4 font-mono font-bold text-slate-400">${b.id || b.bookingid || 'BK-'}</td>
-                            <td class="p-4 text-slate-900 font-bold">${b.item_name || b.itemname || '-'}</td>
-                            <td class="p-4 text-center font-bold">${b.chem_quantity || b.quantity || 1}</td>
-                            <td class="p-4 text-slate-600 font-mono text-[10px]">${displayTimeStr}</td>
-                            <td class="p-4 text-center"><span class="px-2 py-1 rounded bg-amber-50 text-amber-600 font-bold border">${b.status}</span></td>
-                        </tr>
-                    `;
-                }).join('');
-            }
-
-            if(pastUsageLogs.length === 0) {
-                logsBody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-400 italic">ไม่มีประวัติประวัติย้อนหลัง</td></tr>`;
-            } else {
-                logsBody.innerHTML = pastUsageLogs.map(b => {
-                    let displayTimeStr = b.date || '-';
-                    if (b.start_time) {
-                        displayTimeStr = b.end_time ? `${b.start_time} ~ ${b.end_time}` : `รับเมื่อ: ${b.start_time}`;
-                    }
-                    return `
-                        <tr class="text-xs border-b text-slate-500">
-                            <td class="p-4 font-mono">${b.id || b.bookingid || '-'}</td>
-                            <td class="p-4 font-medium text-slate-700">${b.item_name || b.itemname || '-'}</td>
-                            <td class="p-4 text-center font-bold">${b.chem_quantity || b.quantity || 1}</td>
-                            <td class="p-4 font-mono text-[10px]">${displayTimeStr}</td>
-                            <td class="p-4 text-center"><span class="px-2 py-0.5 rounded text-[10px] bg-slate-100">${b.status}</span></td>
-                        </tr>
-                    `;
-                }).join('');
-            }
-        }
-
-        async function submitCartToBackend() {
-            const submitBtn = document.getElementById('submitCartBtn');
-            submitBtn.disabled = true;
-            submitBtn.innerText = "กำลังยิงโปรโตคอลส่งคำขอ...";
-
-            try {
-                for (let item of userCart) {
-                    const payload = {
-                        action: "newBooking",
-                        user_email: accountSession.email,
-                        item_type: item.cat === 'instruments' ? 'Instrument' : (item.cat === 'glassware' ? 'Glassware' : 'Chemical'),
-                        item_id: item.id,
-                        item_name: item.name,
-                        chem_quantity: item.qty,
-                        advisor_name: accountSession.advisor || "ไม่มีอาจารย์ระบุ",
-                        // ส่งค่าฟิลด์วันเวลาแยกประเภทตรงไปยัง Google Apps Script
-                        start_time: item.meta.start_time,
-                        end_time: item.meta.end_time,
-                        date: new Date().toISOString().split('T')[0]
-                    };
-
-                    await fetch(API_URL, {
-                        method: "POST",
-                        mode: "no-cors",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify(payload)
-                    });
-                }
-
-                alert("🎉 บันทึกส่งรายการสำเร็จครบถ้วน! สามารถส่องความคืบหน้าการอนุมัติในตารางประวัติด้านขวาได้เลยครับ");
-                userCart = [];
-                updateCartUiView();
-                await loadAllData();
-            } catch (err) {
-                alert("เกิดข้อผิดพลาดในการเชื่อมต่อเครือข่ายระบบสารสนเทศแลป");
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.innerText = "ส่งคำขออนุมัติทั้งหมด";
-            }
-        }
-
-        function popOpenImageModal(url) {
-            if (!url || url.trim() === "" || url === "undefined") {
-                alert("⚠️ อุปกรณ์รายการนี้ยังไม่ได้อัปโหลดรูปภาพ");
-                return;
-            }
-            document.getElementById('modalImg').src = url;
-            document.getElementById('imageModal').classList.remove('hidden');
-        }
-    </script>
+    function toggleLoading(show) { document.getElementById("loadingSpinner").classList[show ? 'remove' : 'add']("hidden"); }
+  </script>
 </body>
 </html>
