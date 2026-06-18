@@ -7,98 +7,493 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .glass { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2); }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
     </style>
 </head>
-<body class="bg-gray-50 font-sans">
+<body class="bg-slate-50 font-sans antialiased text-slate-800">
 
-    <div id="imageModal" class="fixed inset-0 bg-black/80 hidden flex items-center justify-center z-[100] p-4" onclick="this.classList.add('hidden')">
-        <div class="bg-white p-2 rounded-2xl max-w-sm w-full shadow-2xl" onclick="event.stopPropagation()">
-            <img id="modalImg" src="" class="w-full h-auto rounded-xl">
-            <button onclick="document.getElementById('imageModal').classList.add('hidden')" class="w-full mt-4 bg-gray-800 text-white py-2 rounded-xl font-bold">ปิดหน้าต่าง</button>
+    <div id="imageModal" class="fixed inset-0 bg-black/80 hidden flex items-center justify-center z-[100] p-4 animate-fade-in" onclick="this.classList.add('hidden')">
+        <div class="bg-white p-3 rounded-2xl max-w-sm w-full shadow-2xl transform transition-all scale-100" onclick="event.stopPropagation()">
+            <div class="relative overflow-hidden rounded-xl bg-slate-100 aspect-square flex items-center justify-center">
+                <img id="modalImg" src="" class="w-full h-full object-cover" alt="Lab Item">
+            </div>
+            <button onclick="document.getElementById('imageModal').classList.add('hidden')" class="w-full mt-4 bg-slate-900 hover:bg-slate-800 text-white py-2.5 rounded-xl font-bold text-sm transition">
+                ปิดหน้าต่าง
+            </button>
         </div>
     </div>
 
-    <div id="loginScreen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gradient-to-br from-blue-900 via-blue-700 to-indigo-900">
-        <div class="absolute inset-0 overflow-hidden opacity-20">
-            <div class="absolute -top-10 -left-10 w-96 h-96 bg-blue-500 rounded-full blur-3xl animate-pulse"></div>
+    <div id="loginScreen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-950">
+        <div class="absolute inset-0 overflow-hidden opacity-30 pointer-events-none">
+            <div class="absolute -top-40 -left-40 w-[600px] h-[600px] bg-blue-500 rounded-full blur-[120px] animate-pulse"></div>
+            <div class="absolute -bottom-40 -right-40 w-[600px] h-[600px] bg-indigo-500 rounded-full blur-[120px] animate-pulse delay-1000"></div>
         </div>
-        <div class="glass relative z-10 w-full max-w-md p-8 rounded-3xl text-center shadow-2xl">
-            <div class="w-20 h-20 mx-auto bg-blue-500/20 rounded-full flex items-center justify-center mb-6 border border-white/20 text-4xl">🔬</div>
-            <h2 class="text-3xl font-bold text-white mb-2">Inorganic Smart Lab</h2>
-            <p class="text-blue-200 mb-8 text-sm">Enterprise Management System</p>
-            <form id="loginForm" class="space-y-4">
-                <input type="email" id="login_email" placeholder="อีเมลมหาวิทยาลัย" required class="w-full p-4 bg-white/10 border border-white/20 rounded-xl text-white placeholder-blue-300 outline-none focus:ring-2 focus:ring-blue-400">
-                <button type="submit" id="loginBtn" class="w-full py-4 bg-blue-500 text-white font-bold rounded-xl shadow-lg hover:bg-blue-400 transition">เข้าสู่ระบบ</button>
+        
+        <div class="glass relative z-10 w-full max-w-md p-8 rounded-3xl text-center shadow-2xl border border-white/10">
+            <div class="w-20 h-20 mx-auto bg-gradient-to-tr from-blue-500 to-indigo-500 rounded-2xl flex items-center justify-center mb-6 shadow-xl text-4xl shadow-blue-500/20 text-white">
+                🔬
+            </div>
+            <h2 class="text-3xl font-black text-white mb-2 tracking-tight">Inorganic Smart Lab</h2>
+            <p class="text-blue-200/70 mb-8 text-sm font-medium">ระบบบริหารจัดการห้องปฏิบัติการอัจฉริยะ</p>
+            
+            <form id="loginForm" class="space-y-4 text-left">
+                <div>
+                    <label class="block text-xs font-semibold text-blue-200 mb-2 uppercase tracking-wider">University Email</label>
+                    <input type="email" id="login_email" placeholder="example@university.ac.th" required 
+                        class="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-400 outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition bg-opacity-20 backdrop-blur-sm">
+                </div>
+                <button type="submit" id="loginBtn" class="w-full py-4 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-blue-500/20 transform active:scale-[0.98] transition">
+                    เข้าสู่ระบบ / Access System
+                </button>
             </form>
+            <p id="loginError" class="text-red-400 mt-4 text-sm font-medium hidden bg-red-500/10 p-2 rounded-lg border border-red-500/20"></p>
         </div>
     </div>
 
-    <div id="mainDashboard" class="hidden min-h-screen">
-        <header class="bg-blue-600 text-white p-4 shadow-lg flex justify-between items-center">
-            <h1 class="font-bold tracking-wider">🔬 INORGANIC SMART LAB</h1>
-            <button onclick="location.reload()" class="bg-red-500 px-4 py-1 rounded-full text-xs font-bold hover:bg-red-600">ออกจากระบบ</button>
+    <div id="mainDashboard" class="hidden min-h-screen flex flex-col">
+        <header class="bg-slate-900 border-b border-slate-800 text-white px-6 py-4 shadow-xl flex justify-between items-center sticky top-0 z-40">
+            <div class="flex items-center gap-4">
+                <div class="text-2xl">🧪</div>
+                <div>
+                    <h1 class="font-black text-sm tracking-wider uppercase text-blue-400">INORGANIC SMART LAB</h1>
+                    <div class="flex items-center gap-2 mt-0.5">
+                        <span id="userName" class="text-xs text-slate-400 font-medium">กำลังโหลด...</span>
+                        <span id="roleBadge" class="text-[9px] bg-blue-500/20 text-blue-300 border border-blue-500/30 px-2 py-0.5 rounded-full uppercase tracking-widest font-black">USER</span>
+                    </div>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <button onclick="loadAllData()" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 p-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5" title="รีเฟรชข้อมูลคลัง">
+                    🔄 <span class="hidden md:inline">รีเฟรช</span>
+                </button>
+                <button onclick="location.reload()" class="bg-red-500/10 hover:bg-red-500 hover:text-white border border-red-500/20 text-red-400 px-4 py-2 rounded-xl text-xs font-bold transition">
+                    ออกจากระบบ
+                </button>
+            </div>
         </header>
 
-        <main class="container mx-auto p-4 lg:p-8 grid lg:grid-cols-3 gap-8">
-            <section class="space-y-6">
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                    <h2 class="font-bold text-gray-700 mb-4 border-b pb-2">🛒 ตะกร้าของฉัน</h2>
-                    <div id="cartList" class="text-sm text-gray-600 mb-4 min-h-[50px]"></div>
-                    <button onclick="submitCart()" class="w-full bg-green-600 text-white py-3 rounded-xl font-bold hover:bg-green-700">ส่งคำขอยืม</button>
+        <main class="container mx-auto p-4 lg:p-8 grid grid-cols-1 lg:grid-cols-3 gap-8 flex-1">
+            
+            <section class="space-y-6 lg:col-span-1">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60">
+                    <h2 class="font-bold text-slate-800 text-lg mb-4 flex items-center gap-2">🛒 ทำรายการยืมวัตถุดิบ/เครื่องมือ</h2>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 mb-1">1. เลือกประเภทอุปกรณ์</label>
+                            <select id="typeSelect" onchange="filterItemDropdown()" class="w-full p-3 border border-slate-200 rounded-xl bg-slate-50 outline-none focus:ring-2 focus:ring-blue-500/20 font-medium">
+                                <option value="instruments">⚙️ เครื่องมือวิเคราะห์ (Instruments)</option>
+                                <option value="glassware">🧪 เครื่องแก้ววิทยาศาสตร์ (Glassware)</option>
+                                <option value="chemicals">⚗️ สารเคมีห้องแลป (Chemicals)</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 mb-1">2. เลือกรายการ</label>
+                            <select id="itemSelect" class="w-full p-3 border border-slate-200 rounded-xl bg-slate-50 outline-none focus:ring-2 focus:ring-blue-500/20 font-medium"></select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 mb-1">3. ระบุจำนวนที่ต้องการ</label>
+                            <div class="flex gap-2">
+                                <input type="number" id="qtyInput" value="1" min="1" class="w-full p-3 border border-slate-200 rounded-xl bg-slate-50 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-center">
+                                <button onclick="addItemToCart()" class="bg-slate-900 hover:bg-slate-800 text-white px-6 rounded-xl font-bold text-sm transition shrink-0">
+                                    + ใส่ตะกร้า
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 border-t border-slate-100 pt-4">
+                        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">รายการในตะกร้าของคุณ</h3>
+                        <div id="cartBox" class="space-y-2 max-h-[200px] overflow-y-auto custom-scrollbar text-sm font-medium">
+                            <p class="text-slate-400 text-xs italic py-2">ไม่มีสินค้าในตะกร้าในขณะนี้</p>
+                        </div>
+                        <button onclick="submitCartToBackend()" id="submitCartBtn" disabled class="w-full mt-4 bg-green-600 hover:bg-green-700 disabled:bg-slate-200 disabled:text-slate-400 text-white py-3 rounded-xl font-bold text-sm transition shadow-lg shadow-green-600/10">
+                            ส่งคำขออนุมัติยืมของ
+                        </button>
+                    </div>
                 </div>
             </section>
 
-            <section class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                <h2 class="font-bold text-gray-700 mb-4">📦 รายการในคลัง</h2>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-sm text-left">
-                        <thead class="bg-gray-50 text-gray-500">
-                            <tr><th class="p-3">ชื่อ</th><th class="p-3">คงเหลือ</th><th class="p-3 text-center">ดูรูป</th></tr>
-                        </thead>
-                        <tbody id="inventoryBody"></tbody>
-                    </table>
+            <section class="lg:col-span-2 space-y-8">
+                
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden">
+                    <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                        <h2 class="font-bold text-slate-800 text-lg flex items-center gap-2">📦 ตรวจสอบคลังและสต็อกสินค้า</h2>
+                        <span class="text-xs bg-slate-200 px-2.5 py-1 rounded-lg font-bold text-slate-600" id="totalItemsCount">0 รายการ</span>
+                    </div>
+                    <div class="overflow-x-auto custom-scrollbar max-h-[350px]">
+                        <table class="w-full text-sm text-left whitespace-nowrap">
+                            <thead class="bg-slate-50 text-slate-500 sticky top-0 border-b border-slate-100 font-bold text-xs">
+                                <tr>
+                                    <th class="p-4">รหัส</th>
+                                    <th class="p-4">ชื่อรายการ</th>
+                                    <th class="p-4">ประเภท</th>
+                                    <th class="p-4 text-center">พร้อมใช้งาน</th>
+                                    <th class="p-4 text-center">รูปภาพ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inventoryTableBody" class="divide-y divide-slate-100 font-medium">
+                                <tr>
+                                    <td colspan="5" class="p-8 text-center text-slate-400 italic">กำลังเชื่อมต่อฐานข้อมูลคลังแลป...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
+
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden">
+                    <div class="p-6 border-b border-slate-100 bg-blue-50/30">
+                        <h2 class="font-bold text-slate-800 text-lg flex items-center gap-2 text-blue-900">📋 สถานะการยืมปัจจุบัน (My Booking History)</h2>
+                        <p class="text-xs text-slate-500 mt-1">ติดตามสถานะคำขอที่อยู่ระหว่างการดำเนินงานวิจัย หรือรอการส่งคืนแลป</p>
+                    </div>
+                    <div class="overflow-x-auto custom-scrollbar max-h-[300px]">
+                        <table class="w-full text-sm text-left">
+                            <thead class="bg-slate-50 text-slate-500 font-bold text-xs border-b border-slate-100">
+                                <tr>
+                                    <th class="p-4">รหัสคิว</th>
+                                    <th class="p-4">ชื่อสิ่งของ</th>
+                                    <th class="p-4 text-center">จำนวน</th>
+                                    <th class="p-4">วันทำรายการ</th>
+                                    <th class="p-4 text-center">สถานะ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="myBookingHistoryBody" class="divide-y divide-slate-100 font-medium">
+                                <tr>
+                                    <td colspan="5" class="p-6 text-center text-slate-400 italic">ไม่มีรายการยืมที่ค้างอยู่</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden">
+                    <div class="p-6 border-b border-slate-100 bg-emerald-50/30">
+                        <h2 class="font-bold text-slate-800 text-lg flex items-center gap-2 text-emerald-900">🗄️ บันทึกประวัติการใช้แลปย้อนหลัง (Usage Logs)</h2>
+                        <p class="text-xs text-slate-500 mt-1">คลังประวัติแสดงข้อมูลรายการที่เสร็จสิ้นสมบูรณ์แล้วในอดีต (คืนแล้ว / ยกเลิก)</p>
+                    </div>
+                    <div class="overflow-x-auto custom-scrollbar max-h-[300px]">
+                        <table class="w-full text-sm text-left">
+                            <thead class="bg-slate-50 text-slate-500 font-bold text-xs border-b border-slate-100">
+                                <tr>
+                                    <th class="p-4">รหัสอ้างอิง</th>
+                                    <th class="p-4">ชื่อสิ่งของ</th>
+                                    <th class="p-4 text-center">จำนวน</th>
+                                    <th class="p-4">วันที่ทำรายการ</th>
+                                    <th class="p-4 text-center">ผลลัพธ์รายการ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usageLogsTableBody" class="divide-y divide-slate-100 font-medium">
+                                <tr>
+                                    <td colspan="5" class="p-6 text-center text-slate-400 italic">ไม่มีบันทึกประวัติเก่าในระบบ Log</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
             </section>
         </main>
     </div>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbxvj0zOc77ZaXn9WKvrGWHkOHsRVtdZoml-hBzCYm-r_8rgxr_Hk-mmy7y2MEkd5kV2/exec";
-        let masterData = { instruments: [], glassware: [], chemicals: [] };
+        const API_URL = "https://script.google.com/macros/s/AKfycbykNc2ZmDU0arqN3V2_nc29hxh6k_2LTCnSiSb9PA-absrMG7jiRP_vGB7pTZpKeiT4/exec";
+        let masterData = { instruments: [], glassware: [], chemicals: [], bookings: [] };
+        let userCart = [];
+        let accountSession = null;
 
-        async function loadData() {
-            const res = await fetch(API_URL);
-            masterData = await res.json();
-            renderTable();
+        // 1. ระบบยืนยันตัวตนก่อนเข้าหน้าเว็บ
+        document.getElementById('loginForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const emailField = document.getElementById('login_email');
+            const submitBtn = document.getElementById('loginBtn');
+            const errBox = document.getElementById('loginError');
+
+            submitBtn.disabled = true;
+            submitBtn.innerText = "กำลังตรวจสอบโปรโตคอล...";
+            errBox.classList.add('hidden');
+
+            try {
+                const checkUrl = `${API_URL}?action=checkUser&email=${encodeURIComponent(emailField.value.trim())}`;
+                const res = await fetch(checkUrl);
+                const user = await res.json();
+
+                if (user.status === "found") {
+                    accountSession = user;
+                    accountSession.email = emailField.value.trim().toLowerCase();
+                    
+                    // สลับสับเปลี่ยนหน้าจอ UI
+                    document.getElementById('loginScreen').classList.add('hidden');
+                    document.getElementById('mainDashboard').classList.remove('hidden');
+                    
+                    // ใส่รายละเอียด Profile ข้อมูล
+                    document.getElementById('userName').innerText = user.name;
+                    document.getElementById('roleBadge').innerText = user.role;
+                    if(user.role.toLowerCase() === 'admin') {
+                        document.getElementById('roleBadge').className = "text-[9px] bg-red-500/20 text-red-400 border border-red-500/30 px-2 py-0.5 rounded-full uppercase tracking-widest font-black";
+                    }
+
+                    // โหลดฐานข้อมูลหลักของแลปทั้งหมด
+                    await loadAllData();
+                } else {
+                    showLoginError(user.message || "ไม่พบบัญชีผู้ใช้ที่มีสิทธิ์เข้าแลปนี้");
+                }
+            } catch (err) {
+                showLoginError("ไม่สามารถติดต่อเซิร์ฟเวอร์คลังได้ กรุณาตรวจเช็กการ Deploy");
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerText = "เข้าสู่ระบบ / Access System";
+            }
+        };
+
+        function showLoginError(msg) {
+            const errBox = document.getElementById('loginError');
+            errBox.innerText = "❌ " + msg;
+            errBox.classList.remove('hidden');
         }
 
-        function renderTable() {
-            const tbody = document.getElementById('inventoryBody');
-            const items = [...masterData.instruments, ...masterData.glassware, ...masterData.chemicals];
-            tbody.innerHTML = items.map(i => `
-                <tr class="border-b border-gray-100 hover:bg-gray-50">
-                    <td class="p-3 font-medium">${i.name}</td>
-                    <td class="p-3 text-blue-600 font-bold">${i.available || i.total}</td>
-                    <td class="p-3 text-center">
-                        <button onclick="showImage('${i.image_url}')" class="bg-blue-100 px-3 py-1 rounded-lg text-blue-700 text-xs font-bold">ดูรูป</button>
-                    </td>
-                </tr>
-            `).join('');
+        // 2. ฟังก์ชันโหลดข้อมูลหลักคลังแลปทั้งหมด (ดึงปุ่มรีเฟรชมาสั่งงานที่นี่ได้ด้วย)
+        async function loadAllData() {
+            const tbody = document.getElementById('inventoryTableBody');
+            tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-blue-600 font-bold animate-pulse">🔄 กำลังซิงค์ข้อมูลคลังจากระบบคลาวด์ล่าสุด...</td></tr>`;
+            
+            try {
+                const response = await fetch(API_URL);
+                masterData = await response.json();
+                
+                renderStockTable();
+                filterItemDropdown();
+                renderUserBookingHistoryAndLogs();
+            } catch (error) {
+                tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-red-500 font-bold">❌ ไม่สามารถดึงข้อมูลคลังได้สำเร็จ</td></tr>`;
+            }
         }
 
-        function showImage(url) {
+        // 3. แสดงผลตารางคลังสินค้าสต็อกปัจจุบัน
+        function renderStockTable() {
+            const tbody = document.getElementById('inventoryTableBody');
+            const totalBadge = document.getElementById('totalItemsCount');
+            
+            const insts = (masterData.instruments || []).map(i => ({...i, category: 'เครื่องมือวิเคราะห์'}));
+            const glass = (masterData.glassware || []).map(g => ({...g, category: 'เครื่องแก้วแลป'}));
+            const chems = (masterData.chemicals || []).map(c => ({...c, category: 'สารเคมีคลัง'}));
+            
+            const combined = [...insts, ...glass, ...chems];
+            totalBadge.innerText = `${combined.length} รายการ`;
+
+            if(combined.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-slate-400">ไม่มีข้อมูลอุปกรณ์ในคลังในขณะนี้</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = combined.map(item => {
+                const stockQty = Number(item.available !== undefined ? item.available : item.total || 0);
+                return `
+                    <tr class="border-b border-slate-100 hover:bg-slate-50/80 transition">
+                        <td class="p-4 font-mono text-xs text-slate-400">${item.id || '-'}</td>
+                        <td class="p-4 text-slate-900 font-bold">${item.name || 'ไม่มีชื่อ'}</td>
+                        <td class="p-4 text-xs text-slate-500">${item.category}</td>
+                        <td class="p-4 text-center font-bold ${stockQty > 0 ? 'text-blue-600 bg-blue-50/20' : 'text-red-500 bg-red-50/20'}">${stockQty}</td>
+                        <td class="p-4 text-center">
+                            <button onclick="popOpenImageModal('${item.image_url}')" class="text-xs bg-slate-100 hover:bg-blue-50 hover:text-blue-600 border border-slate-200 px-3 py-1.5 rounded-xl font-bold transition">
+                                🖼️ ดูรูป
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // 4. หน้าต่างดูรูปภาพ Modal Pop-up ปรับปรุงใหม่
+        function popOpenImageModal(url) {
+            if (!url || url.trim() === "" || url === "undefined") {
+                alert("⚠️ อุปกรณ์รายการนี้ยังไม่ได้ถูกอัปโหลดรูปภาพลงระบบคลังสินค้า");
+                return;
+            }
             document.getElementById('modalImg').src = url;
             document.getElementById('imageModal').classList.remove('hidden');
         }
 
-        document.getElementById('loginForm').onsubmit = (e) => {
-            e.preventDefault();
-            document.getElementById('loginScreen').classList.add('hidden');
-            document.getElementById('mainDashboard').classList.remove('hidden');
-            loadData();
-        };
+        // 5. ปรับเปลี่ยนข้อมูลตัวเลือก Dropdown เมนูด้านซ้าย
+        function filterItemDropdown() {
+            const currentCategory = document.getElementById('typeSelect').value;
+            const dropdown = document.getElementById('itemSelect');
+            const targetData = masterData[currentCategory] || [];
 
-        function submitCart() { alert("บันทึกคำขอเรียบร้อย"); }
+            dropdown.innerHTML = targetData.map(item => {
+                const stockQty = Number(item.available !== undefined ? item.available : item.total || 0);
+                return `<option value="${item.id}">${item.name} [คงเหลือในคลัง: ${stockQty}]</option>`;
+            }).join('');
+        }
+
+        // 6. เพิ่มข้อมูลเข้าสู่ตะกร้า พร้อมระบบดักบั๊คความรัดกุมสูงห้ามยืมเกินจำนวที่มี
+        function addItemToCart() {
+            const cat = document.getElementById('typeSelect').value;
+            const selectedId = document.getElementById('itemSelect').value;
+            const requestQty = Number(document.getElementById('qtyInput').value);
+
+            if(!selectedId) { alert("กรุณาเลือกสิ่งของก่อนครับ"); return; }
+            if(requestQty <= 0) { alert("กรุณาระบุจำนวนที่มากกว่า 0"); return; }
+
+            const originalItem = masterData[cat].find(i => i.id.toString() === selectedId.toString());
+            const currentInStock = Number(originalItem.available !== undefined ? originalItem.available : originalItem.total || 0);
+
+            // เช็กว่าไอเทมนี้เคยหยิบใส่ตะกร้าไปหรือยัง เพื่อเอาจำนวนมารวมกันตรวจเช็ก
+            const existingInCart = userCart.find(c => c.id.toString() === selectedId.toString() && c.cat === cat);
+            const totalRequested = (existingInCart ? existingInCart.qty : 0) + requestQty;
+
+            if (totalRequested > currentInStock) {
+                alert(`❌ บั๊คจำนวน: สต็อกพร้อมใช้งานมีเพียง ${currentInStock} รายการ คุณไม่สามารถขอเบิกเกินจำนวนสต็อกที่มีอยู่จริงได้`);
+                return;
+            }
+
+            if(existingInCart) {
+                existingInCart.qty = totalRequested;
+            } else {
+                userCart.push({
+                    cat: cat,
+                    id: originalItem.id,
+                    name: originalItem.name,
+                    qty: requestQty
+                });
+            }
+            updateCartUiView();
+        }
+
+        // ลบรายการในตะกร้า
+        function removeCartItem(idx) {
+            userCart.splice(idx, 1);
+            updateCartUiView();
+        }
+
+        // วาดภาพตะกร้าสินค้า
+        function updateCartUiView() {
+            const container = document.getElementById('cartBox');
+            const submitBtn = document.getElementById('submitCartBtn');
+
+            if(userCart.length === 0) {
+                container.innerHTML = `<p class="text-slate-400 text-xs italic py-2">ไม่มีสินค้าในตะกร้าในขณะนี้</p>`;
+                submitBtn.disabled = true;
+                return;
+            }
+
+            submitBtn.disabled = false;
+            container.innerHTML = userCart.map((item, index) => `
+                <div class="flex justify-between items-center bg-slate-50 border border-slate-100 p-2.5 rounded-xl">
+                    <div class="truncate pr-2">
+                        <div class="font-bold text-slate-800 truncate">${item.name}</div>
+                        <div class="text-[10px] text-slate-400">จำนวนที่ขอยืม: <span class="text-blue-600 font-bold">${item.qty}</span> ชิ้น</div>
+                    </div>
+                    <button onclick="removeCartItem(${index})" class="text-xs bg-red-50 text-red-500 hover:bg-red-500 hover:text-white w-6 h-6 rounded-lg font-bold transition flex items-center justify-center">
+                        ✕
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        // 7. จัดการหน้าประวัติยืมปัจจุบัน (My Booking History) และ ประวัติการใช้แลปย้อนหลัง (Logs) แยกจากกันชัดเจน
+        function renderUserBookingHistoryAndLogs() {
+            const historyBody = document.getElementById('myBookingHistoryBody');
+            const logsBody = document.getElementById('usageLogsTableBody');
+            
+            const rawBookings = masterData.bookings || [];
+            
+            // กรองดูข้อมูลเฉพาะของ User อีเมลที่เข้าสู่ระบบเท่านั้น
+            const myAllRecords = rawBookings.filter(b => b.user_email && b.user_email.toString().trim().toLowerCase() === accountSession.email);
+
+            // กรองชุดที่ 1: สถานะปัจจุบันที่กำลังทำรายการ (My Booking History)
+            const activeStatuses = ["pending approval", "approved", "borrowing", "pending"];
+            const currentActiveHistory = myAllRecords.filter(b => activeStatuses.includes(b.status.toString().trim().toLowerCase()));
+
+            // กรองชุดที่ 2: บันทึกข้อมูลประวัติเก่าเสร็จสิ้นเรียบร้อย (Logs)
+            const finishedStatuses = ["returned", "rejected", "cancelled", "done"];
+            const pastUsageLogs = myAllRecords.filter(b => finishedStatuses.includes(b.status.toString().trim().toLowerCase()));
+
+            // เรนเดอร์ลงตาราง My Booking History
+            if(currentActiveHistory.length === 0) {
+                historyBody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-400 italic">ไม่มีรายการยืมที่ค้างอยู่ในขณะนี้</td></tr>`;
+            } else {
+                historyBody.innerHTML = currentActiveHistory.map(b => {
+                    let badgeColor = "bg-amber-50 text-amber-600 border-amber-200/50";
+                    if (b.status.toLowerCase() === 'approved' || b.status.toLowerCase() === 'borrowing') {
+                        badgeColor = "bg-blue-50 text-blue-600 border-blue-200/50";
+                    }
+                    return `
+                        <tr class="text-xs border-b border-slate-100 hover:bg-slate-50/50 transition">
+                            <td class="p-4 font-mono font-bold text-slate-400">${b.id || b.bookingid || 'BK-'}</td>
+                            <td class="p-4 text-slate-900 font-bold">${b.item_name || b.itemname || '-'}</td>
+                            <td class="p-4 text-center font-bold text-slate-700">${b.chem_quantity || b.quantity || 1}</td>
+                            <td class="p-4 text-slate-400">${b.timestamp || '-'}</td>
+                            <td class="p-4 text-center">
+                                <span class="px-2 py-1 rounded-md border font-bold ${badgeColor}">${b.status}</span>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+
+            // เรนเดอร์ลงตาราง Usage Logs
+            if(pastUsageLogs.length === 0) {
+                logsBody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-400 italic">ไม่มีบันทึกข้อมูลประวัติประวัติเก่าในระบบฐานประวัติ</td></tr>`;
+            } else {
+                logsBody.innerHTML = pastUsageLogs.map(b => {
+                    let logStatusColor = b.status.toLowerCase() === 'returned' ? 'text-emerald-600 bg-emerald-50' : 'text-slate-400 bg-slate-100';
+                    return `
+                        <tr class="text-xs border-b border-slate-100 hover:bg-slate-50/30 transition text-slate-500">
+                            <td class="p-4 font-mono">${b.id || b.bookingid || '-'}</td>
+                            <td class="p-4 font-medium text-slate-700">${b.item_name || b.itemname || '-'}</td>
+                            <td class="p-4 text-center font-bold">${b.chem_quantity || b.quantity || 1}</td>
+                            <td class="p-4">${b.timestamp || '-'}</td>
+                            <td class="p-4 text-center">
+                                <span class="px-2 py-0.5 rounded font-medium text-[10px] ${logStatusColor}">${b.status.toUpperCase()}</span>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+        }
+
+        // 8. ลูปยิงข้อมูลโพสต์ตระกร้าสินค้าส่งค่าข้ามไปยัง Google Sheets ฝั่งหลังบ้าน
+        async function submitCartToBackend() {
+            const submitBtn = document.getElementById('submitCartBtn');
+            submitBtn.disabled = true;
+            submitBtn.innerText = "กำลังเขียนบันทึกลงฐานข้อมูลแลป...";
+
+            try {
+                for (let item of userCart) {
+                    const payload = {
+                        action: "newBooking",
+                        user_email: accountSession.email,
+                        item_type: item.cat === 'instruments' ? 'Instrument' : (item.cat === 'glassware' ? 'Glassware' : 'Chemical'),
+                        item_id: item.id,
+                        item_name: item.name,
+                        chem_quantity: item.qty,
+                        advisor_name: accountSession.advisor || "ไม่มีอาจารย์ระบุ",
+                        date: new Date().toISOString().split('T')[0]
+                    };
+
+                    await fetch(API_URL, {
+                        method: "POST",
+                        mode: "no-cors", // เพื่อป้องกันปัญหานโยบายข้ามโดเมน CORS ของ Google App Script ล็อกหน้าเว็บ
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(payload)
+                    });
+                }
+
+                alert("🎉 ส่งคำขออนุมัติยืมรายการสำเร็จ! โปรดติดตามผลในแถบตารางประวัติ My Booking History ด้านขวา");
+                userCart = [];
+                updateCartUiView();
+                await loadAllData(); // ดึงประวัติที่พึ่งเขียนสดๆ และอัปเดตยอดคลังใหม่
+            } catch (err) {
+                alert("เกิดข้อผิดพลาดในการเชื่อมต่อเครือข่ายระบบสารสนเทศแลป");
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerText = "ส่งคำขออนุมัติยืมของ";
+            }
+        }
     </script>
 </body>
 </html>
